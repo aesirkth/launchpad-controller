@@ -39,8 +39,8 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 
                 Arduino      FILL/VENT Relay (NB: jumper between VCC and JD-VCC)
                 GND----------GND   (ground in)
-                A3-----------IN2   (Command pin for relay 1)
-                A4-----------IN1   (Command pin for relay 2)
+                A3-----------IN2   (Command pin for relay 2)
+                A4-----------IN1   (Command pin for relay 1)
                 5V-----------VCC   (5V in)
                 Connect the solenoids on Normally Open side
 */
