@@ -39,8 +39,8 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 
                 Arduino      FILL/VENT Relay (NB: jumper between VCC and JD-VCC)
                 GND----------GND   (ground in)
-                A3-----------IN2   (Command pin for solenoid 1)
-                A4-----------IN1   (Command pin for solenoid 2)
+                A3-----------IN2   (Command pin for relay 1)
+                A4-----------IN1   (Command pin for relay 2)
                 5V-----------VCC   (5V in)
                 Connect the solenoids on Normally Open side
 */
@@ -65,8 +65,8 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 #define CMD_TM_DISABLE 0x42 // 'B'
 #define CMD_CA_TRIGGER 0x43 // 'C'
 
-#define REPLY_ACK  0x3D // '='
-#define REPLY_NACK 0x21 // '!'
+#define REPLY_ACK  0x3D // '=' This is returned if the command is successfuly executed
+#define REPLY_NACK 0x21 // '!' This is returned if the command is not successfuly executed
 
 uint8_t command = 0x00;
 bool is_filling = false;
