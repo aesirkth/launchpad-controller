@@ -163,7 +163,7 @@ void write_byte(uint8_t data)
 
 void start_filling()
 { // Enable solenoid 1 only if solenoid 2 is disabled
-  if (!is_venting)
+  if (!is_venting && !is_armed)
   {
     is_filling = true;
     digitalWrite(PIN_RELAY_FILL, LOW);
@@ -187,7 +187,7 @@ void stop_filling()
 
 void start_venting()
 { // Enable solenoid 2 only if solenoid 1 is disabled
-  if (!is_filling)
+  if (!is_filling && !is_armed)
   {
     is_venting = true;
     digitalWrite(PIN_RELAY_VENT, LOW);
@@ -212,16 +212,24 @@ void stop_venting()
 void arm()
 { // Set is_armed to true
   // is_armed must be true to allow ignition
-  is_armed = true;
-  write_byte(REPLY_ACK);
-  write_byte(CMD_ARM);
+  if (!is_filling && !is_venting)
+  {
+    is_armed = true;
+    write_byte(REPLY_ACK);
+    write_byte(CMD_ARM);
+  }
+  else
+  {
+    write_byte(REPLY_NACK);
+    write_byte(CMD_ARM);
+  }  
 }
 
 void disarm()
 { // Set is_armed to false
   // is_armed must be true to allow ignition
   is_armed = false;
-  // Also stop firing
+  // Also stop firing, just in case
   digitalWrite(PIN_RELAY_FIRE, HIGH);
   write_byte(REPLY_ACK);
   write_byte(CMD_DISARM);
@@ -232,7 +240,7 @@ void start_ignition()
   // is_armed must be true to allow ignition
   // Solenoid 1 must be closed to allow ignition
   // Solenoid 2 must be closed to allow ignition
-  if (is_armed && !is_filling && !is_venting)
+  if (is_armed)
   {
     digitalWrite(PIN_RELAY_FIRE, LOW);
     write_byte(REPLY_ACK);
