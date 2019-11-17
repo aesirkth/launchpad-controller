@@ -134,7 +134,7 @@ void loop()
       trigger_calibration();
       break;
     default:
-    write_byte(REPLY_NACK);
+    send_byte(REPLY_NACK);
       break;
     }
   }
@@ -142,6 +142,10 @@ void loop()
   command = 0x00;
   delay(100);
 }
+
+/*
+ * Functions for communication with the Ground Station
+ */
 
 void init_communication()
 { // Initialize the communication link
@@ -156,10 +160,14 @@ void read_byte(uint8_t *data)
   }
 }
 
-void write_byte(uint8_t data)
+void send_byte(uint8_t data)
 { // Write one byte to the communication link
   Serial.write(data);
 }
+
+/*
+ * Controls for the Rocket fueling and ignition
+ */
 
 void start_filling()
 { // Enable solenoid 1 only if solenoid 2 is disabled
@@ -167,13 +175,13 @@ void start_filling()
   {
     is_filling = true;
     digitalWrite(PIN_RELAY_FILL, LOW);
-    write_byte(REPLY_ACK);
-    write_byte(CMD_FILL_START);
+    send_byte(REPLY_ACK);
+    send_byte(CMD_FILL_START);
   }
   else
   {
-    write_byte(REPLY_NACK);
-    write_byte(CMD_FILL_START);
+    send_byte(REPLY_NACK);
+    send_byte(CMD_FILL_START);
   }
 }
 
@@ -181,8 +189,8 @@ void stop_filling()
 { // Disable solenoid 1
   is_filling = false;
   digitalWrite(PIN_RELAY_FILL, HIGH);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_FILL_STOP);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_FILL_STOP);
 }
 
 void start_venting()
@@ -191,13 +199,13 @@ void start_venting()
   {
     is_venting = true;
     digitalWrite(PIN_RELAY_VENT, LOW);
-    write_byte(REPLY_ACK);
-    write_byte(CMD_VENT_START);
+    send_byte(REPLY_ACK);
+    send_byte(CMD_VENT_START);
   }
   else
   {
-    write_byte(REPLY_NACK);
-    write_byte(CMD_VENT_START);
+    send_byte(REPLY_NACK);
+    send_byte(CMD_VENT_START);
   }
 }
 
@@ -205,8 +213,8 @@ void stop_venting()
 { // Disable solenoid 2
   is_venting = false;
   digitalWrite(PIN_RELAY_VENT, HIGH);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_VENT_STOP);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_VENT_STOP);
 }
 
 void arm()
@@ -215,13 +223,13 @@ void arm()
   if (!is_filling && !is_venting)
   {
     is_armed = true;
-    write_byte(REPLY_ACK);
-    write_byte(CMD_ARM);
+    send_byte(REPLY_ACK);
+    send_byte(CMD_ARM);
   }
   else
   {
-    write_byte(REPLY_NACK);
-    write_byte(CMD_ARM);
+    send_byte(REPLY_NACK);
+    send_byte(CMD_ARM);
   }  
 }
 
@@ -231,8 +239,8 @@ void disarm()
   is_armed = false;
   // Also stop firing, just in case
   digitalWrite(PIN_RELAY_FIRE, HIGH);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_DISARM);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_DISARM);
 }
 
 void start_ignition()
@@ -243,35 +251,39 @@ void start_ignition()
   if (is_armed)
   {
     digitalWrite(PIN_RELAY_FIRE, LOW);
-    write_byte(REPLY_ACK);
-    write_byte(CMD_FIRE_START);
+    send_byte(REPLY_ACK);
+    send_byte(CMD_FIRE_START);
   }
   else
   {
-    write_byte(REPLY_NACK);
-    write_byte(CMD_FIRE_START);
+    send_byte(REPLY_NACK);
+    send_byte(CMD_FIRE_START);
   }
 }
 
 void stop_ignition()
 { // Disable ignition circuit
   digitalWrite(PIN_RELAY_FIRE, HIGH);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_FIRE_STOP);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_FIRE_STOP);
 }
 
+/*
+ * Controls for the Rocket through the ombilicals
+ */
+
 void enable_telemetry()
-{ // Enable the Telemetry and FPC transmitters (on the rocket)
+{ // Enable the Telemetry and FPV transmitters (on the rocket)
   digitalWrite(PIN_OMBI_TM, HIGH);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_TM_ENABLE);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_TM_ENABLE);
 }
 
 void disable_telemetry()
-{ // Disable the Telemetry and FPC transmitters (on the rocket)
+{ // Disable the Telemetry and FPV transmitters (on the rocket)
   digitalWrite(PIN_OMBI_TM, LOW);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_TM_DISABLE);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_TM_DISABLE);
 }
 
 void trigger_calibration()
@@ -279,6 +291,6 @@ void trigger_calibration()
   digitalWrite(PIN_OMBI_CA, LOW);
   delay(100);
   digitalWrite(PIN_OMBI_CA, HIGH);
-  write_byte(REPLY_ACK);
-  write_byte(CMD_CA_TRIGGER);
+  send_byte(REPLY_ACK);
+  send_byte(CMD_CA_TRIGGER);
 }
