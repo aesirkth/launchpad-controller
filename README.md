@@ -22,6 +22,8 @@ In order to make everything work you need :
 - 2x single channel 5V relay (to power the ignition circuit)
 - 1x fuel line (*not described here*)
 - 1x ignition circuit (*not described here*)
+- 1x Sigmundr rocket
+- 1x ombilical cables
 
 # Setup
 
@@ -32,7 +34,8 @@ In order to make everything work you need :
 5. Connect the solenoids of the fuel line to the outputs of the dual channels relay
 6. Connect one 2s battery to the input of the single channel relay
 7. Connect the ignition circuit to the output of the single channel relay
-8. (optional) connect the Arduino to a computer with an USB cable
+8. Connect the ombilicals to the rocket
+9. (optional) connect the Arduino to a computer with an USB cable
 
 # Ignition sequence
 
