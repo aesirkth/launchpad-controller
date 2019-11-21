@@ -45,6 +45,11 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
                 Connect the solenoids on Normally Open side
 */
 
+// Including  RadioHead library 
+#include <SPI.h>
+#include <RH_RF95.h>
+#include <RHReliableDatagram.h>
+
 // Single wire ombilicals to the rocket
 #define PIN_OMBI_TM A0 // Write LOW to this pin to disable the Telemetry and FPV transmitters
 #define PIN_OMBI_CA A1 // Write LOW to this pin to start a sensor calibration on the rocket
@@ -65,8 +70,14 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 #define CMD_TM_DISABLE 0x42 // 'B'
 #define CMD_CA_TRIGGER 0x43 // 'C'
 
-#define REPLY_ACK  0x3D // '=' This is returned if the command is successfuly executed
-#define REPLY_NACK 0x21 // '!' This is returned if the command is not successfuly executed
+#define BAUDRATE 115200
+#define BONJOUR 'LAUNCHPADSTATION'
+#define RFM95_CS 10
+#define RFM95_RST 9
+#define RFM95_INT 2
+#define RF95_FREQ 915.0
+
+RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 uint8_t command = 0x00;
 bool is_filling = false;
@@ -88,14 +99,21 @@ void setup()
   // Default state is HIGH for the ombilicals
   digitalWrite(PIN_OMBI_TM, HIGH);
   digitalWrite(PIN_OMBI_CA, HIGH);
-
+  // Reset of RFM95
+  pinMode(RFM95_RST, OUTPUT);
+  digitalWrite(RFM95_RST, HIGH);
+  digitalWrite(RFM95_RST, LOW);
+  delay(10);
+  digitalWrite(RFM95_RST, HIGH);
+  delay(10);
+  
   init_communication();
 }
 
 void loop()
 {
   read_byte(&command);
-
+  
   if (command)
   {
     switch (command)
@@ -134,9 +152,9 @@ void loop()
       trigger_calibration();
       break;
     default:
-    send_byte(REPLY_NACK);
       break;
     }
+    send_byte(&command);
   }
   // Reset this to the default value
   command = 0x00;
@@ -150,19 +168,28 @@ void loop()
 void init_communication()
 { // Initialize the communication link
   Serial.begin(115200);
+  rf95.init();
+  rf95.setFrequency(RF95_FREQ);
+  rf95.setTxPower(23, false);
 }
 
 void read_byte(uint8_t *data)
 { // Read one byte in the buffer
-  if (Serial.available() > 0)
+  uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN]; // rf95.maxMessageLength()Or [RH_RF95_MAX_MESSAGE_LEN]
+  uint8_t rf95_len = sizeof(rf95_buf);
+  if (rf95.recv(rf95_buf, &rf95_len))
   {
-    *data = Serial.read();
+    *data = rf95_buf[0];
+    Serial.print("Received from Gateway "); Serial.println((char*)data);
+    Serial.println(rf95_len);
+    Serial.println(sizeof(rf95_buf));
   }
 }
 
-void send_byte(uint8_t data)
+void send_byte(uint8_t *data)
 { // Write one byte to the communication link
-  Serial.write(data);
+  rf95.send(*data, sizeof(*data));   //Make sure later that len in .send(data, len) is big enought for data.
+  Serial.print("Sending to Gateway.."); Serial.println((char*)data);
 }
 
 /*
@@ -175,13 +202,9 @@ void start_filling()
   {
     is_filling = true;
     digitalWrite(PIN_RELAY_FILL, LOW);
-    send_byte(REPLY_ACK);
-    send_byte(CMD_FILL_START);
   }
   else
   {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_FILL_START);
   }
 }
 
@@ -189,8 +212,6 @@ void stop_filling()
 { // Disable solenoid 1
   is_filling = false;
   digitalWrite(PIN_RELAY_FILL, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_FILL_STOP);
 }
 
 void start_venting()
@@ -199,13 +220,9 @@ void start_venting()
   {
     is_venting = true;
     digitalWrite(PIN_RELAY_VENT, LOW);
-    send_byte(REPLY_ACK);
-    send_byte(CMD_VENT_START);
   }
   else
   {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_VENT_START);
   }
 }
 
@@ -213,8 +230,6 @@ void stop_venting()
 { // Disable solenoid 2
   is_venting = false;
   digitalWrite(PIN_RELAY_VENT, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_VENT_STOP);
 }
 
 void arm()
@@ -223,14 +238,7 @@ void arm()
   if (!is_filling && !is_venting)
   {
     is_armed = true;
-    send_byte(REPLY_ACK);
-    send_byte(CMD_ARM);
   }
-  else
-  {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_ARM);
-  }  
 }
 
 void disarm()
@@ -239,8 +247,6 @@ void disarm()
   is_armed = false;
   // Also stop firing, just in case
   digitalWrite(PIN_RELAY_FIRE, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_DISARM);
 }
 
 void start_ignition()
@@ -251,21 +257,12 @@ void start_ignition()
   if (is_armed)
   {
     digitalWrite(PIN_RELAY_FIRE, LOW);
-    send_byte(REPLY_ACK);
-    send_byte(CMD_FIRE_START);
-  }
-  else
-  {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_FIRE_START);
   }
 }
 
 void stop_ignition()
 { // Disable ignition circuit
   digitalWrite(PIN_RELAY_FIRE, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_FIRE_STOP);
 }
 
 /*
@@ -275,15 +272,11 @@ void stop_ignition()
 void enable_telemetry()
 { // Enable the Telemetry and FPV transmitters (on the rocket)
   digitalWrite(PIN_OMBI_TM, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_TM_ENABLE);
 }
 
 void disable_telemetry()
 { // Disable the Telemetry and FPV transmitters (on the rocket)
   digitalWrite(PIN_OMBI_TM, LOW);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_TM_DISABLE);
 }
 
 void trigger_calibration()
@@ -291,6 +284,4 @@ void trigger_calibration()
   digitalWrite(PIN_OMBI_CA, LOW);
   delay(100);
   digitalWrite(PIN_OMBI_CA, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_CA_TRIGGER);
 }
