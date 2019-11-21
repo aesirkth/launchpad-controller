@@ -175,21 +175,30 @@ void init_communication()
 
 void read_byte(uint8_t *data)
 { // Read one byte in the buffer
-  uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN]; // rf95.maxMessageLength()Or [RH_RF95_MAX_MESSAGE_LEN]
-  uint8_t rf95_len = sizeof(rf95_buf);
-  if (rf95.recv(rf95_buf, &rf95_len))
+  if (rf95.available())
   {
-    *data = rf95_buf[0];
-    Serial.print("Received from Gateway "); Serial.println((char*)data);
-    Serial.println(rf95_len);
-    Serial.println(sizeof(rf95_buf));
+    uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t rf95_len = sizeof(rf95_buf);
+
+    if (rf95.recv(rf95_buf, &rf95_len))
+    {
+      *data = rf95_buf[0];
+    }
+  }
+  else if (Serial.available() > 0)
+  {
+    *data = Serial.read();
   }
 }
 
 void send_byte(uint8_t *data)
 { // Write one byte to the communication link
-  rf95.send(*data, sizeof(*data));   //Make sure later that len in .send(data, len) is big enought for data.
-  Serial.print("Sending to Gateway.."); Serial.println((char*)data);
+  uint8_t payload = *data;
+  delay(10);
+  rf95.send(&payload, 1);
+  rf95.waitPacketSent();
+
+  Serial.write(payload); Serial.write('\r');Serial.write('\n');
 }
 
 /*
@@ -202,9 +211,6 @@ void start_filling()
   {
     is_filling = true;
     digitalWrite(PIN_RELAY_FILL, LOW);
-  }
-  else
-  {
   }
 }
 
@@ -220,9 +226,6 @@ void start_venting()
   {
     is_venting = true;
     digitalWrite(PIN_RELAY_VENT, LOW);
-  }
-  else
-  {
   }
 }
 
