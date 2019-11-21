@@ -65,13 +65,18 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 #define CMD_TM_DISABLE 0x42 // 'B'
 #define CMD_CA_TRIGGER 0x43 // 'C'
 
-#define REPLY_ACK  0x3D // '=' This is returned if the command is successfuly executed
-#define REPLY_NACK 0x21 // '!' This is returned if the command is not successfuly executed
+#define BIT_FILLING_POS 0
+#define BIT_VENTING_POS 1
+#define BIT_ARMED_POS   2
+#define BIT_FIRING_POS  3
+#define BIT_TM_POS      4
 
 uint8_t command = 0x00;
 bool is_filling = false;
 bool is_venting = false;
 bool is_armed = false;
+bool is_firing = false;
+bool is_tm_enabled = true;
 
 void setup()
 {
@@ -134,9 +139,9 @@ void loop()
       trigger_calibration();
       break;
     default:
-    send_byte(REPLY_NACK);
       break;
     }
+    send_status();
   }
   // Reset this to the default value
   command = 0x00;
@@ -150,6 +155,7 @@ void loop()
 void init_communication()
 { // Initialize the communication link
   Serial.begin(115200);
+  Serial.println("LAUNCHPADSTATION");
 }
 
 void read_byte(uint8_t *data)
@@ -165,6 +171,19 @@ void send_byte(uint8_t data)
   Serial.write(data);
 }
 
+void send_status()
+{
+  uint8_t status = 0;
+  status = status | is_filling << BIT_FILLING_POS;
+  status = status | is_venting << BIT_VENTING_POS;
+  status = status | is_armed << BIT_ARMED_POS;
+  status = status | is_firing << BIT_FIRING_POS;
+  status = status | is_tm_enabled << BIT_TM_POS;
+  send_byte(status);
+  send_byte('\r');
+  send_byte('\n');
+}
+
 /*
  * Controls for the Rocket fueling and ignition
  */
@@ -175,13 +194,6 @@ void start_filling()
   {
     is_filling = true;
     digitalWrite(PIN_RELAY_FILL, LOW);
-    send_byte(REPLY_ACK);
-    send_byte(CMD_FILL_START);
-  }
-  else
-  {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_FILL_START);
   }
 }
 
@@ -189,8 +201,6 @@ void stop_filling()
 { // Disable solenoid 1
   is_filling = false;
   digitalWrite(PIN_RELAY_FILL, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_FILL_STOP);
 }
 
 void start_venting()
@@ -199,13 +209,6 @@ void start_venting()
   {
     is_venting = true;
     digitalWrite(PIN_RELAY_VENT, LOW);
-    send_byte(REPLY_ACK);
-    send_byte(CMD_VENT_START);
-  }
-  else
-  {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_VENT_START);
   }
 }
 
@@ -213,8 +216,6 @@ void stop_venting()
 { // Disable solenoid 2
   is_venting = false;
   digitalWrite(PIN_RELAY_VENT, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_VENT_STOP);
 }
 
 void arm()
@@ -223,14 +224,7 @@ void arm()
   if (!is_filling && !is_venting)
   {
     is_armed = true;
-    send_byte(REPLY_ACK);
-    send_byte(CMD_ARM);
   }
-  else
-  {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_ARM);
-  }  
 }
 
 void disarm()
@@ -238,9 +232,8 @@ void disarm()
   // is_armed must be true to allow ignition
   is_armed = false;
   // Also stop firing, just in case
+  is_firing = false;
   digitalWrite(PIN_RELAY_FIRE, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_DISARM);
 }
 
 void start_ignition()
@@ -250,22 +243,15 @@ void start_ignition()
   // Solenoid 2 must be closed to allow ignition
   if (is_armed)
   {
+    is_firing = true;
     digitalWrite(PIN_RELAY_FIRE, LOW);
-    send_byte(REPLY_ACK);
-    send_byte(CMD_FIRE_START);
-  }
-  else
-  {
-    send_byte(REPLY_NACK);
-    send_byte(CMD_FIRE_START);
   }
 }
 
 void stop_ignition()
 { // Disable ignition circuit
+  is_firing = false;
   digitalWrite(PIN_RELAY_FIRE, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_FIRE_STOP);
 }
 
 /*
@@ -274,16 +260,14 @@ void stop_ignition()
 
 void enable_telemetry()
 { // Enable the Telemetry and FPV transmitters (on the rocket)
+  is_tm_enabled = true;
   digitalWrite(PIN_OMBI_TM, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_TM_ENABLE);
 }
 
 void disable_telemetry()
 { // Disable the Telemetry and FPV transmitters (on the rocket)
+  is_tm_enabled = false;
   digitalWrite(PIN_OMBI_TM, LOW);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_TM_DISABLE);
 }
 
 void trigger_calibration()
@@ -291,6 +275,4 @@ void trigger_calibration()
   digitalWrite(PIN_OMBI_CA, LOW);
   delay(100);
   digitalWrite(PIN_OMBI_CA, HIGH);
-  send_byte(REPLY_ACK);
-  send_byte(CMD_CA_TRIGGER);
 }
