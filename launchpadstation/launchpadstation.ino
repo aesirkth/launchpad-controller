@@ -219,7 +219,7 @@ void send_status()
   status = status | is_armed << BIT_ARMED_POS;
   status = status | is_firing << BIT_FIRING_POS;
   status = status | is_tm_enabled << BIT_TM_POS;
-  send_byte(status);
+  send_byte(&status);
 }
 
 /*
