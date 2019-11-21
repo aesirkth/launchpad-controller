@@ -79,10 +79,18 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
+#define BIT_FILLING_POS 0
+#define BIT_VENTING_POS 1
+#define BIT_ARMED_POS   2
+#define BIT_FIRING_POS  3
+#define BIT_TM_POS      4
+
 uint8_t command = 0x00;
 bool is_filling = false;
 bool is_venting = false;
 bool is_armed = false;
+bool is_firing = false;
+bool is_tm_enabled = true;
 
 void setup()
 {
@@ -154,7 +162,7 @@ void loop()
     default:
       break;
     }
-    send_byte(&command);
+    send_status();
   }
   // Reset this to the default value
   command = 0x00;
@@ -168,6 +176,8 @@ void loop()
 void init_communication()
 { // Initialize the communication link
   Serial.begin(115200);
+  Serial.println("LAUNCHPADSTATION");
+  
   rf95.init();
   rf95.setFrequency(RF95_FREQ);
   rf95.setTxPower(23, false);
@@ -199,6 +209,17 @@ void send_byte(uint8_t *data)
   rf95.waitPacketSent();
 
   Serial.write(payload); Serial.write('\r');Serial.write('\n');
+}
+
+void send_status()
+{
+  uint8_t status = 0;
+  status = status | is_filling << BIT_FILLING_POS;
+  status = status | is_venting << BIT_VENTING_POS;
+  status = status | is_armed << BIT_ARMED_POS;
+  status = status | is_firing << BIT_FIRING_POS;
+  status = status | is_tm_enabled << BIT_TM_POS;
+  send_byte(status);
 }
 
 /*
@@ -249,6 +270,7 @@ void disarm()
   // is_armed must be true to allow ignition
   is_armed = false;
   // Also stop firing, just in case
+  is_firing = false;
   digitalWrite(PIN_RELAY_FIRE, HIGH);
 }
 
@@ -259,12 +281,14 @@ void start_ignition()
   // Solenoid 2 must be closed to allow ignition
   if (is_armed)
   {
+    is_firing = true;
     digitalWrite(PIN_RELAY_FIRE, LOW);
   }
 }
 
 void stop_ignition()
 { // Disable ignition circuit
+  is_firing = false;
   digitalWrite(PIN_RELAY_FIRE, HIGH);
 }
 
@@ -274,11 +298,13 @@ void stop_ignition()
 
 void enable_telemetry()
 { // Enable the Telemetry and FPV transmitters (on the rocket)
+  is_tm_enabled = true;
   digitalWrite(PIN_OMBI_TM, HIGH);
 }
 
 void disable_telemetry()
 { // Disable the Telemetry and FPV transmitters (on the rocket)
+  is_tm_enabled = false;
   digitalWrite(PIN_OMBI_TM, LOW);
 }
 
