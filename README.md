@@ -45,19 +45,20 @@ The *RadioHead* library from airspayce is also required to control the LoRa modu
 ## Launch Pad Station Board
 
 1. Upload `launchpadstation.ino` on the Arduino
-2. Connect the *Launch Pad Station Board* relay outputs to the relays:
+2. Connect the 5V and GND pins of the relays to the 5V and GND pins on the *Launch Pad Station Board*
+3. Connect the *Launch Pad Station Board* outputs to the relays:
    1. Connect Arduino pin `A2` to `IN1` on the ignition relay
    2. Connect Arduino pin `A3` to `IN2` on the solenoids relay (Fill)
    3. Connect Arduino pin `A4` to `IN1` on the solenoids relay (Vent)
-3. Connect one 3S lipo battery to the DC-DC converter
-4. Connect the DC-DC converter to the 5V input of the *Launch Pad Station Board*
-5. Connect two high current 3S lipo battery to the input of the solenoids relay
-6. Connect one 3S lipo battery to the input of the ignition relay
-7. Connect the solenoids of the fuel line to the outputs of the solenoids relay
-8. Connect the ignition circuit to the output of the ignition channel relay
-9.  Connect the ombilicals to the rocket
-10. (optional) connect the Arduino to a computer with a USB cable
-11. (optional) control the Launch Pad Station with the GUI found on [aesirkth/GroundStation](https://github.com/aesirkth/GroundStation)
+4. Connect one 3S lipo battery to the DC-DC converter
+5. Connect the DC-DC converter to the 5V input of the *Launch Pad Station Board*
+6. Connect two high current 3S lipo battery to the input of the solenoids relay
+7. Connect one 3S lipo battery to the input of the ignition relay
+8. Connect the solenoids of the fuel line to the outputs of the solenoids relay
+9. Connect the ignition circuit to the output of the ignition channel relay
+10. Connect the ombilicals to the rocket
+11. (optional) connect the Arduino to a computer with a USB cable
+12. (optional) control the Launch Pad Station with the GUI found on [aesirkth/GroundStation](https://github.com/aesirkth/GroundStation)
 
 > Use (optional) steps when not using the Launch Pad Station Gateway
 
