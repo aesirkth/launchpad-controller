@@ -56,7 +56,7 @@ The *RadioHead* library from airspayce is also required to control the LoRa modu
 10. (optional) connect the Arduino to a computer with a USB cable
 11. (optional) control the Launch Pad Station with the GUI found on [aesirkth/GroundStation](https://github.com/aesirkth/GroundStation)
 
-> Use (optional) steps when no using the Launch Pad Station Gateway
+> Use (optional) steps when not using the Launch Pad Station Gateway
 
 ## Launch Pad Station Gateway
 
