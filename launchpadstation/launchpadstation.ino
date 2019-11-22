@@ -33,14 +33,14 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 
                 Arduino      Ignition Relay
                 GND----------GND   (ground in)
-                A2-----------IN1   (Command pin)
+                A2-----------IN1   (Command pin for ignition)
                 5V-----------VCC   (5V in)
                 Connect the ignition circuit on Normally Open side
 
-                Arduino      FILL/VENT Relay (NB: jumper between VCC and JD-VCC)
+                Arduino      Solenoids Relay (NB: jumper between VCC and JD-VCC)
                 GND----------GND   (ground in)
-                A3-----------IN2   (Command pin for relay 2)
-                A4-----------IN1   (Command pin for relay 1)
+                A3-----------IN2   (Command pin for venting)
+                A4-----------IN1   (Command pin for filling)
                 5V-----------VCC   (5V in)
                 Connect the solenoids on Normally Open side
 */
