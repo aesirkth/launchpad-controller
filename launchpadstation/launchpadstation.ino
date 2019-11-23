@@ -33,17 +33,22 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 
                 Arduino      Ignition Relay
                 GND----------GND   (ground in)
-                A2-----------IN1   (Command pin)
+                A2-----------IN1   (Command pin for ignition)
                 5V-----------VCC   (5V in)
                 Connect the ignition circuit on Normally Open side
 
-                Arduino      FILL/VENT Relay (NB: jumper between VCC and JD-VCC)
+                Arduino      Solenoids Relay (NB: jumper between VCC and JD-VCC)
                 GND----------GND   (ground in)
-                A3-----------IN2   (Command pin for relay 2)
-                A4-----------IN1   (Command pin for relay 1)
+                A3-----------IN2   (Command pin for venting)
+                A4-----------IN1   (Command pin for filling)
                 5V-----------VCC   (5V in)
                 Connect the solenoids on Normally Open side
 */
+
+// Including  RadioHead library 
+#include <SPI.h>
+#include <RH_RF95.h>
+#include <RHReliableDatagram.h>
 
 // Single wire ombilicals to the rocket
 #define PIN_OMBI_TM A0 // Write LOW to this pin to disable the Telemetry and FPV transmitters
@@ -64,6 +69,15 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 #define CMD_TM_ENABLE  0x41 // 'A'
 #define CMD_TM_DISABLE 0x42 // 'B'
 #define CMD_CA_TRIGGER 0x43 // 'C'
+
+#define BAUDRATE 115200
+#define BONJOUR 'LAUNCHPADSTATION'
+#define RFM95_CS 10
+#define RFM95_RST 9
+#define RFM95_INT 2
+#define RF95_FREQ 915.0
+
+RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 #define BIT_FILLING_POS 0
 #define BIT_VENTING_POS 1
@@ -93,14 +107,21 @@ void setup()
   // Default state is HIGH for the ombilicals
   digitalWrite(PIN_OMBI_TM, HIGH);
   digitalWrite(PIN_OMBI_CA, HIGH);
-
+  // Reset of RFM95
+  pinMode(RFM95_RST, OUTPUT);
+  digitalWrite(RFM95_RST, HIGH);
+  digitalWrite(RFM95_RST, LOW);
+  delay(10);
+  digitalWrite(RFM95_RST, HIGH);
+  delay(10);
+  
   init_communication();
 }
 
 void loop()
 {
   read_byte(&command);
-
+  
   if (command)
   {
     switch (command)
@@ -156,19 +177,38 @@ void init_communication()
 { // Initialize the communication link
   Serial.begin(115200);
   Serial.println("LAUNCHPADSTATION");
+  
+  rf95.init();
+  rf95.setFrequency(RF95_FREQ);
+  rf95.setTxPower(23, false);
 }
 
 void read_byte(uint8_t *data)
 { // Read one byte in the buffer
-  if (Serial.available() > 0)
+  if (rf95.available())
+  {
+    uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t rf95_len = sizeof(rf95_buf);
+
+    if (rf95.recv(rf95_buf, &rf95_len))
+    {
+      *data = rf95_buf[0];
+    }
+  }
+  else if (Serial.available() > 0)
   {
     *data = Serial.read();
   }
 }
 
-void send_byte(uint8_t data)
+void send_byte(uint8_t *data)
 { // Write one byte to the communication link
-  Serial.write(data);
+  uint8_t payload = *data;
+  delay(10);
+  rf95.send(&payload, 1);
+  rf95.waitPacketSent();
+
+  Serial.write(payload); Serial.write('\r');Serial.write('\n');
 }
 
 void send_status()
@@ -179,9 +219,7 @@ void send_status()
   status = status | is_armed << BIT_ARMED_POS;
   status = status | is_firing << BIT_FIRING_POS;
   status = status | is_tm_enabled << BIT_TM_POS;
-  send_byte(status);
-  send_byte('\r');
-  send_byte('\n');
+  send_byte(&status);
 }
 
 /*
