@@ -188,7 +188,8 @@ void init_communication()
 
 void read_byte(uint8_t *data)
 { // Read one byte in the buffer
-  if (rf95.available())
+
+  if (rf95.waitAvailableTimeout(100))
   {
     uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t rf95_len = sizeof(rf95_buf);

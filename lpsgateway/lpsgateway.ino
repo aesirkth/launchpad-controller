@@ -29,7 +29,7 @@ void loop()
     rf95.waitPacketSent();
     delay(10);
   }
-  if (rf95.waitAvailableTimeout(10))
+  if (rf95.waitAvailableTimeout(100))
   {  
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
