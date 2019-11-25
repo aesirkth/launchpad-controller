@@ -222,6 +222,7 @@ void send_status()
   status = status | is_firing << BIT_FIRING_POS;
   status = status | is_tm_enabled << BIT_TM_POS;
   int16_t rssi;
+  rssi = rf95.lastRssi();
   uint8_t rssi_m;
   uint8_t rssi_l;
   rssi_l = rssi & 0x00FF;
