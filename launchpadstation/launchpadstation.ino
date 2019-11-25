@@ -71,7 +71,7 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 #define CMD_CA_TRIGGER 0x43 // 'C'
 
 #define BAUDRATE 115200
-#define BONJOUR 'LAUNCHPADSTATION'
+#define BONJOUR "LAUNCHPADSTATION"
 #define RFM95_CS 10
 #define RFM95_RST 9
 #define RFM95_INT 2
@@ -91,6 +91,9 @@ bool is_venting = false;
 bool is_armed = false;
 bool is_firing = false;
 bool is_tm_enabled = true;
+
+uint8_t line_feed = 0x0A;
+uint8_t carriage_ret = 0x0D;
 
 void setup()
 {
@@ -176,7 +179,7 @@ void loop()
 void init_communication()
 { // Initialize the communication link
   Serial.begin(115200);
-  Serial.println("LAUNCHPADSTATION");
+  Serial.println(BONJOUR);
   
   rf95.init();
   rf95.setFrequency(RF95_FREQ);
@@ -201,14 +204,13 @@ void read_byte(uint8_t *data)
   }
 }
 
-void send_byte(uint8_t *data)
+void send_byte(uint8_t payload[])
 { // Write one byte to the communication link
-  uint8_t payload = *data;
   delay(10);
-  rf95.send(&payload, 1);
+  rf95.send(payload, 5);
   rf95.waitPacketSent();
 
-  Serial.write(payload); Serial.write('\r');Serial.write('\n');
+  Serial.write(payload, 5);
 }
 
 void send_status()
@@ -219,7 +221,18 @@ void send_status()
   status = status | is_armed << BIT_ARMED_POS;
   status = status | is_firing << BIT_FIRING_POS;
   status = status | is_tm_enabled << BIT_TM_POS;
-  send_byte(&status);
+  int16_t rssi;
+  uint8_t rssi_m;
+  uint8_t rssi_l;
+  rssi_l = rssi & 0x00FF;
+  rssi_m = (rssi & 0xFF00) >> 8;
+  uint8_t message[5];
+  message[0] = status;
+  message[1] = rssi_m;
+  message[2] = rssi_l;
+  message[3] = carriage_ret;
+  message[4] = line_feed;
+  send_byte(message);
 }
 
 /*
