@@ -27,16 +27,15 @@ void loop()
     delay(10);
     rf95.send(&radiopacket, 1);
     rf95.waitPacketSent();
-
     delay(10);
-    if (rf95.waitAvailableTimeout(1000))
-    {  
-      uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-      uint8_t len = sizeof(buf);
-      if (rf95.recv(buf, &len))
-      {
-        Serial.write(*buf);Serial.write('\r');Serial.write('\n');
-      }
+  }
+  if (rf95.waitAvailableTimeout(10))
+  {  
+    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t len = sizeof(buf);
+    if (rf95.recv(buf, &len))
+    {
+      Serial.write(buf, len);
     }
   }
 }
