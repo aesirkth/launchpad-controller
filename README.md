@@ -18,6 +18,8 @@ Here is a description of the rocket's systems taken from [aesirkth/GroundStation
 
 Communication between the Launch Pad Station and the Ground Station is made through a LoRa link. The LoRa tranceivers used are the `RFM95W` running at 915 MHz
 
+To control the *Launch Pad Station Board*, use the control GUI in [aesirkth/GroundStation](https://github.com/aesirkth/GroundStation)
+
 # Requirements
 
 In order to make everything work you need :
