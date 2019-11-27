@@ -71,7 +71,7 @@ void loop()
 void init_communication()
 { // Initialize the communication links
   // Enable the Serial link and send 'BONJOUR' to be recognized by the control interface
-  Serial.begin(115200);
+  Serial.begin(BAUDRATE);
   Serial.println(BONJOUR);
   // Trigger a reset of the transceiver
   digitalWrite(RFM95_RST, LOW);
