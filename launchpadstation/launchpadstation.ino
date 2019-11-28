@@ -85,6 +85,8 @@ interrupt 0 pin D2-----------DIO0  (interrupt request out)
 #define CMD_TM_ENABLE  0x41 // 'A'
 #define CMD_TM_DISABLE 0x42 // 'B'
 #define CMD_CA_TRIGGER 0x43 // 'C'
+#define CMD_SAFE_IN    0x59 // 'Y'
+#define CMD_SAFE_OUT   0x5A // 'Z
 
 // Defines for the Serial link
 #define BAUDRATE 115200
@@ -104,6 +106,7 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 #define BIT_ARMED_POS   2
 #define BIT_FIRING_POS  3
 #define BIT_TM_POS      4
+#define BIT_SAFE_MODE   5
 
 uint8_t command = 0x00;
 bool is_filling = false;
@@ -111,6 +114,8 @@ bool is_venting = false;
 bool is_armed = false;
 bool is_firing = false;
 bool is_tm_enabled = true;
+bool is_safe_mode = true;
+uint8_t count = 0;
 
 bool rf95_init = false;
 
@@ -179,6 +184,12 @@ void loop()
       break;
     case CMD_CA_TRIGGER:
       trigger_calibration();
+      break;
+    case CMD_SAFE_IN:
+      enter_safe_mode();
+      break;
+    case CMD_SAFE_OUT:
+      exit_safe_mode();
       break;
     default:
       break;
@@ -260,6 +271,7 @@ void send_state()
   state = state | is_armed << BIT_ARMED_POS;
   state = state | is_firing << BIT_FIRING_POS;
   state = state | is_tm_enabled << BIT_TM_POS;
+  state = state | is_safe_mode << BIT_SAFE_MODE;
   int16_t rssi;
   if (rf95_init)
   {
@@ -287,7 +299,7 @@ void send_state()
 
 void start_filling()
 { // Enable solenoid 1 only if solenoid 2 is disabled
-  if (!is_venting && !is_armed)
+  if (!is_safe_mode && !is_venting && !is_armed)
   {
     is_filling = true;
     digitalWrite(PIN_RELAY_FILL, LOW);
@@ -302,7 +314,7 @@ void stop_filling()
 
 void start_venting()
 { // Enable solenoid 2 only if solenoid 1 is disabled
-  if (!is_filling && !is_armed)
+  if (!is_safe_mode && !is_filling && !is_armed)
   {
     is_venting = true;
     digitalWrite(PIN_RELAY_VENT, LOW);
@@ -318,7 +330,7 @@ void stop_venting()
 void arm()
 { // Set is_armed to true
   // is_armed must be true to allow ignition
-  if (!is_filling && !is_venting)
+  if (!is_safe_mode && !is_filling && !is_venting)
   {
     is_armed = true;
   }
@@ -372,4 +384,26 @@ void trigger_calibration()
   digitalWrite(PIN_OMBI_CA, LOW);
   delay(100);
   digitalWrite(PIN_OMBI_CA, HIGH);
+}
+
+/*
+ * Safe mode
+ */
+
+void enter_safe_mode()
+{
+  if (!is_filling && !is_venting && !is_armed && !is_firing)
+  {
+    is_safe_mode = true;
+  }
+}
+
+void exit_safe_mode()
+{
+  count++;
+  if (count > 2)
+  {
+    count = 0;
+    is_safe_mode = false;
+  } 
 }
