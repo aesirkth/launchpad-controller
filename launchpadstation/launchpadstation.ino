@@ -112,6 +112,8 @@ bool is_armed = false;
 bool is_firing = false;
 bool is_tm_enabled = true;
 
+bool rf95_init = false;
+
 uint8_t line_feed = 0x0A;
 uint8_t carriage_ret = 0x0D;
 
@@ -203,26 +205,32 @@ void init_communication()
   digitalWrite(RFM95_RST, HIGH);
   delay(10);
   // Initialize the RFM9X transceiver
-  while (!rf95.init()) {
-    Serial.println("LoRa radio init failed");
-    while (1);
-  }
-  // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
-  rf95.setFrequency(RF95_FREQ);
-  rf95.setTxPower(23, false); // Can be set between 5 and 23 dBm
+  rf95_init = rf95.init();
+  if (rf95_init)
+  {
+    // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
+    rf95.setFrequency(RF95_FREQ);
+    rf95.setTxPower(23, false); // Can be set between 5 and 23 dBm
+  }  
 }
 
 void read_byte(uint8_t *data)
 { // Read one byte in the buffer
-
-  if (rf95.waitAvailableTimeout(100))
+  if (rf95_init)
   {
-    uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t rf95_len = sizeof(rf95_buf);
-
-    if (rf95.recv(rf95_buf, &rf95_len))
+    if (rf95.waitAvailableTimeout(100))
     {
-      *data = rf95_buf[0];
+      uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
+      uint8_t rf95_len = sizeof(rf95_buf);
+
+      if (rf95.recv(rf95_buf, &rf95_len))
+      {
+        *data = rf95_buf[0];
+      }
+    }
+    else if (Serial.available() > 0)
+    {
+      *data = Serial.read();
     }
   }
   else if (Serial.available() > 0)
@@ -234,9 +242,12 @@ void read_byte(uint8_t *data)
 void send_payload(uint8_t payload[])
 { // Write the payload to the communication links
   delay(10);
-  rf95.send(payload, 5);
-  rf95.waitPacketSent();
-
+  if (rf95_init)
+  {
+    rf95.send(payload, 5);
+    rf95.waitPacketSent();
+  }
+  
   Serial.write(payload, 5);
 }
 
@@ -249,7 +260,16 @@ void send_state()
   state = state | is_armed << BIT_ARMED_POS;
   state = state | is_firing << BIT_FIRING_POS;
   state = state | is_tm_enabled << BIT_TM_POS;
-  int16_t rssi = rf95.lastRssi();
+  int16_t rssi;
+  if (rf95_init)
+  {
+    rssi = rf95.lastRssi();
+  }
+  else
+  {
+    rssi = 0;
+  }
+  
   uint8_t rssi_msb = (rssi & 0xFF00) >> 8;
   uint8_t rssi_lsb = rssi & 0x00FF;
   uint8_t message[5];
