@@ -14,7 +14,7 @@ The Launch Pad Station consists mainly of two electronics boards. The first one 
 
 Here is a description of the rocket's systems taken from [aesirkth/GroundStation](https://github.com/aesirkth/GroundStation) :
 
-![data_link](https://raw.githubusercontent.com/aesirkth/GroundStation/master/doc/diagrams/data_links.png)
+![data_link](doc/data_links.png)
 
 Communication between the Launch Pad Station and the Ground Station is made through a LoRa link. The LoRa tranceivers used are the `RFM95W` running at 915 MHz
 
