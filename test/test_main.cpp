@@ -58,7 +58,7 @@ void test_rgb() {
 
   strip.clear();
   strip.show();
-  TEST_PASS_MESSAGE("Test passed if saw it");
+  TEST_PASS_MESSAGE("Test passed if you saw it");
 }
 
 void test_outputs() {
