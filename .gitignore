@@ -8,3 +8,6 @@
 
 ### Local build folder ###
 build/**
+
+### PlatformIO ###
+.pio/*
