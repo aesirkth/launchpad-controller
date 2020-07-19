@@ -7,7 +7,7 @@
 
 #include "hardware_definition.h"
 
-RH_RF95 rf95(PIN_RFM_NSS, PIN_RFM_INT);
+RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
 
@@ -16,11 +16,14 @@ void setup() {
 
   UNITY_BEGIN();
 
+  initRFM();
+  RUN_TEST(test_RFM);
+
   initRGB();
   RUN_TEST(test_rgb);
 
   initOutputs();
-  RUN_TEST(testOutputs);
+  RUN_TEST(test_outputs);
 
   UNITY_END();
 }
@@ -29,6 +32,10 @@ void loop() {
 }
 
 /* Tests */
+void test_RFM() {
+  TEST_ASSERT_TRUE(rfm.init());
+}
+
 void test_rgb() {
   TEST_MESSAGE("Testing the RGB leds, do you see them flashing ?");
   delay(1000);
@@ -54,7 +61,7 @@ void test_rgb() {
   TEST_PASS_MESSAGE("Test passed if saw it");
 }
 
-void testOutputs() {
+void test_outputs() {
   TEST_MESSAGE("Testing the main outputs, do you see them activate/deactivate ?");
   delay(1000);
   digitalWrite(PIN_IO1, HIGH);
@@ -74,6 +81,16 @@ void testOutputs() {
 }
 
 /* Utils */
+void initRFM() {
+  pinMode(PIN_RFM_RESET, OUTPUT);
+  digitalWrite(PIN_RFM_RESET, HIGH);
+  delay(100);
+  digitalWrite(PIN_RFM_RESET, LOW);
+  delay(10);
+  digitalWrite(PIN_RFM_RESET, HIGH);
+  delay(100);
+}
+
 void initRGB() {
   strip.begin();
   delay(10);
