@@ -1,4 +1,4 @@
-#include "main.h"
+#include "controller.h"
 
 #include <Adafruit_NeoPixel.h>
 #include <RH_RF95.h>  // RadioHead library  to control the LoRa transceiver
@@ -9,7 +9,7 @@
 #define BAUDRATE 115200
 #define BONJOUR "LAUNCHPADSTATION"
 
-#define RFM_TX_POWER 5  // Can be set between 5 and 23 dBm
+#define RFM_TX_POWER 10  // Can be set between 5 and 23 dBm
 
 #define BIT_RFM_INIT 0
 #define BIT_OUTPUT1 1
@@ -131,6 +131,8 @@ void loop() {
     }
     sendState();
   }
+  command = 0;
+  delay(10);
 }
 
 void initRGB() {
@@ -181,7 +183,7 @@ void initRFM() {
 void initCommunications() {
   Serial.begin(BAUDRATE);
 
-  while (!Serial.available()) {
+  while (!Serial && millis() < 4000) {
   }
   Serial.println(BONJOUR);
 
