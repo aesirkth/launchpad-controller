@@ -9,10 +9,10 @@
 #define PIN_PWM1 16
 #define PIN_PWM2 20
 #define PIN_PWM3 22
-#define PIN_IO1 1
-#define PIN_IO2 A11
-#define PIN_IO3 A10
-#define PIN_IO4 23
+#define PIN_OUTPUT1 1
+#define PIN_OUTPUT2 A11
+#define PIN_OUTPUT3 A10
+#define PIN_OUTPUT4 23
 #define PIN_IN1_B1 7
 #define PIN_IN2_B1 8
 #define PIN_IN1_B2 5

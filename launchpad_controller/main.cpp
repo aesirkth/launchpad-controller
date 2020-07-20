@@ -7,17 +7,36 @@
 #include "hardware_definition.h"
 
 #define BAUDRATE 115200
+#define BONJOUR "LAUNCHPADSTATION"
+
 #define RFM_TX_POWER 5  // Can be set between 5 and 23 dBm
+
+#define BIT_RFM_INIT 0
+#define BIT_OUTPUT1 1
+#define BIT_OUTPUT2 2
+#define BIT_OUTPUT3 3
+#define BIT_OUTPUT4 4
+
+#define CMD_OUTPUT1_EN 0x61   // 'a'
+#define CMD_OUTPUT1_DIS 0x62  // 'b'
+#define CMD_OUTPUT2_EN 0x63   // 'c'
+#define CMD_OUTPUT2_DIS 0x64  // 'd'
+#define CMD_OUTPUT3_EN 0x65   // 'e'
+#define CMD_OUTPUT3_DIS 0x66  // 'f'
+#define CMD_OUTPUT4_EN 0x67   // 'g'
+#define CMD_OUTPUT4_DIS 0x68  // 'h'
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
 
-uint8_t status = 0;
-uint8_t rfm_init_status = 0;
+uint8_t rfm_init_success = 0;
+uint8_t output1_state = 0;
+uint8_t output2_state = 0;
+uint8_t output3_state = 0;
+uint8_t output4_state = 0;
 
 /* Legacy */
-#define BONJOUR "LAUNCHPADSTATION"
 // Single wire ombilicals to the rocket
 #define PIN_OMBI_TM A0  // Write LOW to this pin to disable the Telemetry and FPV transmitters
 #define PIN_OMBI_CA A1  // Write LOW to this pin to start a sensor calibration on the rocket
@@ -59,8 +78,6 @@ bool is_tm_enabled = true;
 bool is_safe_mode = true;
 uint8_t count = 0;
 
-// bool rf95_init = false;
-
 uint8_t line_feed = 0x0A;
 uint8_t carriage_ret = 0x0D;
 /* Legacy */
@@ -77,49 +94,42 @@ void loop() {
 
   if (command) {
     switch (command) {
-      case CMD_FILL_START:
-        start_filling();
+      case CMD_OUTPUT1_EN:
+        toggleOutput(PIN_OUTPUT1, 1);
         break;
-      case CMD_FILL_STOP:
-        stop_filling();
+
+      case CMD_OUTPUT1_DIS:
+        toggleOutput(PIN_OUTPUT1, 0);
         break;
-      case CMD_VENT_START:
-        start_venting();
+
+      case CMD_OUTPUT2_EN:
+        toggleOutput(PIN_OUTPUT2, 1);
         break;
-      case CMD_VENT_STOP:
-        stop_venting();
+
+      case CMD_OUTPUT2_DIS:
+        toggleOutput(PIN_OUTPUT2, 0);
         break;
-      case CMD_ARM:
-        arm();
+
+      case CMD_OUTPUT3_EN:
+        toggleOutput(PIN_OUTPUT3, 1);
         break;
-      case CMD_DISARM:
-        disarm();
+
+      case CMD_OUTPUT3_DIS:
+        toggleOutput(PIN_OUTPUT3, 0);
         break;
-      case CMD_FIRE_START:
-        start_ignition();
+
+      case CMD_OUTPUT4_EN:
+        toggleOutput(PIN_OUTPUT4, 1);
         break;
-      case CMD_FIRE_STOP:
-        stop_ignition();
+
+      case CMD_OUTPUT4_DIS:
+        toggleOutput(PIN_OUTPUT4, 0);
         break;
-      case CMD_TM_ENABLE:
-        enable_telemetry();
-        break;
-      case CMD_TM_DISABLE:
-        disable_telemetry();
-        break;
-      case CMD_CA_TRIGGER:
-        trigger_calibration();
-        break;
-      case CMD_SAFE_IN:
-        enter_safe_mode();
-        break;
-      case CMD_SAFE_OUT:
-        exit_safe_mode();
-        break;
+
       default:
         break;
     }
-    send_state();
+    sendState();
   }
 }
 
@@ -137,15 +147,15 @@ void initRGB() {
 }
 
 void initMainOutputs() {
-  pinMode(PIN_IO1, OUTPUT);
-  pinMode(PIN_IO2, OUTPUT);
-  pinMode(PIN_IO3, OUTPUT);
-  pinMode(PIN_IO4, OUTPUT);
+  pinMode(PIN_OUTPUT1, OUTPUT);
+  pinMode(PIN_OUTPUT2, OUTPUT);
+  pinMode(PIN_OUTPUT3, OUTPUT);
+  pinMode(PIN_OUTPUT4, OUTPUT);
 
-  digitalWrite(PIN_IO1, LOW);
-  digitalWrite(PIN_IO2, LOW);
-  digitalWrite(PIN_IO3, LOW);
-  digitalWrite(PIN_IO4, LOW);
+  digitalWrite(PIN_OUTPUT1, LOW);
+  digitalWrite(PIN_OUTPUT2, LOW);
+  digitalWrite(PIN_OUTPUT3, LOW);
+  digitalWrite(PIN_OUTPUT4, LOW);
 }
 
 void resetRFM() {
@@ -158,36 +168,38 @@ void resetRFM() {
   delay(100);
 }
 
-void initCommunications() {
-  Serial.begin(BAUDRATE);
-  while (!Serial.available()) {
-  }
-
-  Serial.println(BONJOUR);
-
-  resetRFM();
-  rfm_init_status = rfm.init();
-  if (rfm_init_status) {
+void initRFM() {
+  rfm_init_success = rfm.init();
+  if (rfm_init_success) {
     // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
     rfm.setFrequency(RFM_FREQ);
     rfm.setTxPower(RFM_TX_POWER, false);
-  } else {
-    status |= 0b00000010;
-    showStatus();
   }
+  showStatus();
+}
+
+void initCommunications() {
+  Serial.begin(BAUDRATE);
+
+  while (!Serial.available()) {
+  }
+  Serial.println(BONJOUR);
+
+  resetRFM();
+  initRFM();
 }
 
 void showStatus() {
-  if (not rfm_init_status) {
+  if (not rfm_init_success) {
     strip.setPixelColor(0, 0xff0000);
-    strip.show();
+  } else {
+    strip.setPixelColor(0, 0x00ff00);
   }
+  strip.show();
 }
 
-/* Legacy */
-
 void readByte(uint8_t* data) {  // Read one byte in the buffer
-  if (rfm_init_status) {
+  if (rfm_init_success) {
     if (rfm.waitAvailableTimeout(100)) {
       uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
       uint8_t rf95_len = sizeof(rf95_buf);
@@ -203,9 +215,9 @@ void readByte(uint8_t* data) {  // Read one byte in the buffer
   }
 }
 
-void send_payload(uint8_t payload[]) {  // Write the payload to the communication links
+void sendPayload(uint8_t payload[]) {  // Write the payload to the communication links
   delay(10);
-  if (rfm_init_status) {
+  if (rfm_init_success) {
     rfm.send(payload, 5);
     rfm.waitPacketSent();
   }
@@ -213,17 +225,16 @@ void send_payload(uint8_t payload[]) {  // Write the payload to the communicatio
   Serial.write(payload, 5);
 }
 
-void send_state() {  // Get the current state of the Launch Pad Station Board and
+void sendState() {  // Get the current state of the Launch Pad Station Board and
   // send it to the control interface
   uint8_t state = 0;
-  state = state | is_filling << BIT_FILLING_POS;
-  state = state | is_venting << BIT_VENTING_POS;
-  state = state | is_armed << BIT_ARMED_POS;
-  state = state | is_firing << BIT_FIRING_POS;
-  state = state | is_tm_enabled << BIT_TM_POS;
-  state = state | is_safe_mode << BIT_SAFE_MODE;
+  state = state | rfm_init_success << BIT_RFM_INIT;
+  state = state | output1_state << BIT_OUTPUT1;
+  state = state | output2_state << BIT_OUTPUT2;
+  state = state | output3_state << BIT_OUTPUT3;
+  state = state | output4_state << BIT_OUTPUT4;
   int16_t rssi;
-  if (rfm_init_status) {
+  if (rfm_init_success) {
     rssi = rfm.lastRssi();
   } else {
     rssi = 0;
@@ -237,101 +248,32 @@ void send_state() {  // Get the current state of the Launch Pad Station Board an
   message[2] = rssi_lsb;
   message[3] = carriage_ret;
   message[4] = line_feed;
-  send_payload(message);
+  sendPayload(message);
 }
 
-/*
- * Controls for the Rocket fueling and ignition
- */
+void toggleOutput(uint8_t pin, uint8_t en) {
+  switch (pin) {
+    case PIN_OUTPUT1:
+      output1_state = en;
+      digitalWrite(pin, en);
+      break;
 
-void start_filling() {  // Enable solenoid 1 only if solenoid 2 is disabled
-  if (!is_safe_mode && !is_venting && !is_armed) {
-    is_filling = true;
-    digitalWrite(PIN_RELAY_FILL, LOW);
-  }
-}
+    case PIN_OUTPUT2:
+      output2_state = en;
+      digitalWrite(pin, en);
+      break;
 
-void stop_filling() {  // Disable solenoid 1
-  is_filling = false;
-  digitalWrite(PIN_RELAY_FILL, HIGH);
-}
+    case PIN_OUTPUT3:
+      output3_state = en;
+      digitalWrite(pin, en);
+      break;
 
-void start_venting() {  // Enable solenoid 2 only if solenoid 1 is disabled
-  if (!is_safe_mode && !is_filling && !is_armed) {
-    is_venting = true;
-    digitalWrite(PIN_RELAY_VENT, LOW);
-  }
-}
+    case PIN_OUTPUT4:
+      output4_state = en;
+      digitalWrite(pin, en);
+      break;
 
-void stop_venting() {  // Disable solenoid 2
-  is_venting = false;
-  digitalWrite(PIN_RELAY_VENT, HIGH);
-}
-
-void arm() {  // Set is_armed to true
-  // is_armed must be true to allow ignition
-  if (!is_safe_mode && !is_filling && !is_venting) {
-    is_armed = true;
-  }
-}
-
-void disarm() {  // Set is_armed to false
-  // is_armed must be true to allow ignition
-  is_armed = false;
-  // Also stop firing, just in case
-  is_firing = false;
-  digitalWrite(PIN_RELAY_FIRE, HIGH);
-}
-
-void start_ignition() {  // Enable ignition circuit
-  // is_armed must be true to allow ignition
-  // Solenoid 1 must be closed to allow ignition
-  // Solenoid 2 must be closed to allow ignition
-  if (is_armed) {
-    is_firing = true;
-    digitalWrite(PIN_RELAY_FIRE, LOW);
-  }
-}
-
-void stop_ignition() {  // Disable ignition circuit
-  is_firing = false;
-  digitalWrite(PIN_RELAY_FIRE, HIGH);
-}
-
-/*
- * Controls for the Rocket through the ombilicals
- */
-
-void enable_telemetry() {  // Enable the Telemetry and FPV transmitters (on the rocket)
-  is_tm_enabled = true;
-  digitalWrite(PIN_OMBI_TM, HIGH);
-}
-
-void disable_telemetry() {  // Disable the Telemetry and FPV transmitters (on the rocket)
-  is_tm_enabled = false;
-  digitalWrite(PIN_OMBI_TM, LOW);
-}
-
-void trigger_calibration() {  // Trigger a calibration routine (on the rocket)
-  digitalWrite(PIN_OMBI_CA, LOW);
-  delay(100);
-  digitalWrite(PIN_OMBI_CA, HIGH);
-}
-
-/*
- * Safe mode
- */
-
-void enter_safe_mode() {
-  if (!is_filling && !is_venting && !is_armed && !is_firing) {
-    is_safe_mode = true;
-  }
-}
-
-void exit_safe_mode() {
-  count++;
-  if (count > 2) {
-    count = 0;
-    is_safe_mode = false;
+    default:
+      break;
   }
 }

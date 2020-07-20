@@ -64,18 +64,18 @@ void test_rgb() {
 void test_outputs() {
   TEST_MESSAGE("Testing the main outputs, do you see them activate/deactivate ?");
   delay(1000);
-  digitalWrite(PIN_IO1, HIGH);
+  digitalWrite(PIN_OUTPUT1, HIGH);
   delay(1000);
-  digitalWrite(PIN_IO1, LOW);
-  digitalWrite(PIN_IO2, HIGH);
+  digitalWrite(PIN_OUTPUT1, LOW);
+  digitalWrite(PIN_OUTPUT2, HIGH);
   delay(1000);
-  digitalWrite(PIN_IO2, LOW);
-  digitalWrite(PIN_IO3, HIGH);
+  digitalWrite(PIN_OUTPUT2, LOW);
+  digitalWrite(PIN_OUTPUT3, HIGH);
   delay(1000);
-  digitalWrite(PIN_IO3, LOW);
-  digitalWrite(PIN_IO4, HIGH);
+  digitalWrite(PIN_OUTPUT3, LOW);
+  digitalWrite(PIN_OUTPUT4, HIGH);
   delay(1000);
-  digitalWrite(PIN_IO4, LOW);
+  digitalWrite(PIN_OUTPUT4, LOW);
 
   TEST_PASS_MESSAGE("Test passed if saw it");
 }
@@ -101,13 +101,13 @@ void initRGB() {
 }
 
 void initOutputs() {
-  pinMode(PIN_IO1, OUTPUT);
-  pinMode(PIN_IO2, OUTPUT);
-  pinMode(PIN_IO3, OUTPUT);
-  pinMode(PIN_IO4, OUTPUT);
+  pinMode(PIN_OUTPUT1, OUTPUT);
+  pinMode(PIN_OUTPUT2, OUTPUT);
+  pinMode(PIN_OUTPUT3, OUTPUT);
+  pinMode(PIN_OUTPUT4, OUTPUT);
 
-  digitalWrite(PIN_IO1, LOW);
-  digitalWrite(PIN_IO2, LOW);
-  digitalWrite(PIN_IO3, LOW);
-  digitalWrite(PIN_IO4, LOW);
+  digitalWrite(PIN_OUTPUT1, LOW);
+  digitalWrite(PIN_OUTPUT2, LOW);
+  digitalWrite(PIN_OUTPUT3, LOW);
+  digitalWrite(PIN_OUTPUT4, LOW);
 }
