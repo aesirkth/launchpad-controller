@@ -6,11 +6,6 @@
 
 #include "hardware_definition.h"
 
-#define BAUDRATE 115200
-#define BONJOUR "LAUNCHPADSTATION"
-
-#define RFM_TX_POWER 10  // Can be set between 5 and 23 dBm
-
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);

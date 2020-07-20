@@ -6,11 +6,6 @@
 
 #include "hardware_definition.h"
 
-#define BAUDRATE 115200
-#define BONJOUR "LAUNCHPADSTATION"
-
-#define RFM_TX_POWER 10  // Can be set between 5 and 23 dBm
-
 #define BIT_RFM_INIT 0
 #define BIT_OUTPUT1 1
 #define BIT_OUTPUT2 2
