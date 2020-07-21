@@ -31,3 +31,22 @@ Currently, a second Launchpad Controller is needed on the Ground Station side to
 ```sh
 platformio run -t upload -e gateway
 ```
+
+# Folder structure
+
+```cpp
+├── doc/
+├── include/
+│   └── hardware_definition.h   // Pinout and hardware constants
+├── lib/
+├── src/                        // Main code
+│   ├── controller.cpp
+│   ├── controller.h
+│   ├── gateway.cpp
+│   └── gateway.h
+├── test/                       // Code for unit tests
+│   ├── test_main.cpp
+│   └── test_main.h
+├── platformio.ini              // PlatformIO configuration file
+└── README.md                   // This file
+```
