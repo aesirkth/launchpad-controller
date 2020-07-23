@@ -31,51 +31,8 @@ uint8_t output2_state = 0;
 uint8_t output3_state = 0;
 uint8_t output4_state = 0;
 
-/* Legacy */
-// Single wire ombilicals to the rocket
-#define PIN_OMBI_TM A0  // Write LOW to this pin to disable the Telemetry and FPV transmitters
-#define PIN_OMBI_CA A1  // Write LOW to this pin to start a sensor calibration on the rocket
-
-// Pins where the relays are connected
-#define PIN_RELAY_FIRE A2  // Write LOW to this pin to enable the ignition circuit
-#define PIN_RELAY_FILL A3  // Write LOW to this pin to open solenoid 1
-#define PIN_RELAY_VENT A4  // Write LOW to this pin to open solenoid 2
-
-// Commands are single bytes
-#define CMD_FILL_START 0x61  // 'a'
-#define CMD_FILL_STOP 0x62   // 'b'
-#define CMD_VENT_START 0x63  // 'c'
-#define CMD_VENT_STOP 0x64   // 'd'
-#define CMD_ARM 0x65         // 'e'
-#define CMD_DISARM 0x66      // 'f'
-#define CMD_FIRE_START 0x67  // 'g'
-#define CMD_FIRE_STOP 0x68   // 'h'
-#define CMD_TM_ENABLE 0x41   // 'A'
-#define CMD_TM_DISABLE 0x42  // 'B'
-#define CMD_CA_TRIGGER 0x43  // 'C'
-#define CMD_SAFE_IN 0x59     // 'Y'
-#define CMD_SAFE_OUT 0x5A    // 'Z
-
-// Positions of the bit in the 'state' byte
-#define BIT_FILLING_POS 0
-#define BIT_VENTING_POS 1
-#define BIT_ARMED_POS 2
-#define BIT_FIRING_POS 3
-#define BIT_TM_POS 4
-#define BIT_SAFE_MODE 5
-
-uint8_t command = 0x00;
-bool is_filling = false;
-bool is_venting = false;
-bool is_armed = false;
-bool is_firing = false;
-bool is_tm_enabled = true;
-bool is_safe_mode = true;
-uint8_t count = 0;
-
 uint8_t line_feed = 0x0A;
 uint8_t carriage_ret = 0x0D;
-/* Legacy */
 
 void setup() {
   initRGB();
@@ -85,6 +42,7 @@ void setup() {
 }
 
 void loop() {
+  uint8_t command = 0;
   readByte(&command);
 
   if (command) {
@@ -126,7 +84,6 @@ void loop() {
     }
     sendState();
   }
-  command = 0;
   delay(10);
 }
 
