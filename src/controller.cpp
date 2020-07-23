@@ -5,21 +5,13 @@
 #include <SPI.h>
 
 #include "hardware_definition.h"
+#include "utils.h"
 
 #define BIT_RFM_INIT 0
 #define BIT_OUTPUT1 1
 #define BIT_OUTPUT2 2
 #define BIT_OUTPUT3 3
 #define BIT_OUTPUT4 4
-
-#define CMD_OUTPUT1_EN 0x61   // 'a'
-#define CMD_OUTPUT1_DIS 0x62  // 'b'
-#define CMD_OUTPUT2_EN 0x63   // 'c'
-#define CMD_OUTPUT2_DIS 0x64  // 'd'
-#define CMD_OUTPUT3_EN 0x65   // 'e'
-#define CMD_OUTPUT3_DIS 0x66  // 'f'
-#define CMD_OUTPUT4_EN 0x67   // 'g'
-#define CMD_OUTPUT4_DIS 0x68  // 'h'
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
@@ -34,6 +26,8 @@ uint8_t output4_state = 0;
 uint8_t line_feed = 0x0A;
 uint8_t carriage_ret = 0x0D;
 
+char data[CMD_DATA_LEN];
+
 void setup() {
   initRGB();
   initMainOutputs();
@@ -42,41 +36,26 @@ void setup() {
 }
 
 void loop() {
-  uint8_t command = 0;
-  readByte(&command);
-
-  if (command) {
-    switch (command) {
-      case CMD_OUTPUT1_EN:
-        toggleOutput(PIN_OUTPUT1, 1);
+  if (getCommand(data)) {
+    switch (data[0]) {
+      case CMD_SEND_BONJOUR:
+        Serial.println(BONJOUR);
         break;
 
-      case CMD_OUTPUT1_DIS:
-        toggleOutput(PIN_OUTPUT1, 0);
+      case CMD_TOGGLE_OUTPUT1:
+        toggleOutput(PIN_OUTPUT1, data[1] & 0x01);
         break;
 
-      case CMD_OUTPUT2_EN:
-        toggleOutput(PIN_OUTPUT2, 1);
+      case CMD_TOGGLE_OUTPUT2:
+        toggleOutput(PIN_OUTPUT2, data[1] & 0x01);
         break;
 
-      case CMD_OUTPUT2_DIS:
-        toggleOutput(PIN_OUTPUT2, 0);
+      case CMD_TOGGLE_OUTPUT3:
+        toggleOutput(PIN_OUTPUT3, data[1] & 0x01);
         break;
 
-      case CMD_OUTPUT3_EN:
-        toggleOutput(PIN_OUTPUT3, 1);
-        break;
-
-      case CMD_OUTPUT3_DIS:
-        toggleOutput(PIN_OUTPUT3, 0);
-        break;
-
-      case CMD_OUTPUT4_EN:
-        toggleOutput(PIN_OUTPUT4, 1);
-        break;
-
-      case CMD_OUTPUT4_DIS:
-        toggleOutput(PIN_OUTPUT4, 0);
+      case CMD_TOGGLE_OUTPUT4:
+        toggleOutput(PIN_OUTPUT4, data[1] & 0x01);
         break;
 
       default:
@@ -92,8 +71,6 @@ void initRGB() {
   delay(10);
   strip.clear();
   strip.setBrightness(20);
-  delay(10);
-  strip.setPixelColor(0, 0x000000);
   strip.show();
   delay(100);
   strip.setPixelColor(0, 0x66ccff);
@@ -135,10 +112,6 @@ void initRFM() {
 void initCommunications() {
   Serial.begin(BAUDRATE);
 
-  while (!Serial && millis() < 4000) {
-  }
-  Serial.println(BONJOUR);
-
   resetRFM();
   initRFM();
 }
@@ -152,20 +125,22 @@ void showStatus() {
   strip.show();
 }
 
-void readByte(uint8_t* data) {  // Read one byte in the buffer
+uint8_t getCommand(char* data) {
   if (rfm_init_success) {
     if (rfm.waitAvailableTimeout(100)) {
       uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
       uint8_t rf95_len = sizeof(rf95_buf);
 
       if (rfm.recv(rf95_buf, &rf95_len)) {
-        *data = rf95_buf[0];
+        for (uint8_t i = 0; i < CMD_DATA_LEN; i++) {
+          data[i] = rf95_buf[i];
+        }
       }
-    } else if (Serial.available() > 0) {
-      *data = Serial.read();
+    } else {
+      return getSerialCommand(Serial, data);  // Ignore the ID
     }
-  } else if (Serial.available() > 0) {
-    *data = Serial.read();
+  } else {
+    return getSerialCommand(Serial, data);  // Ignore the ID
   }
 }
 

@@ -7,7 +7,7 @@ void initRFM();
 void initCommunications();
 void showStatus();
 
-void readByte(uint8_t *data);
+uint8_t getCommand(char* data);
 void sendPayload(uint8_t payload[]);
 void sendState();
 
