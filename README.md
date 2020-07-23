@@ -1,7 +1,5 @@
 # Launchpad Controller
 
-# Description
-
 This is the embedded software on the Launchpad Controller to be used for the Mjollnir project.
 It controls all the equipement on the Launchpad and is remotely operated from the Ground Station
 
@@ -12,7 +10,16 @@ The Launchpad Controller is an upgraded version of what was used for the Sigmund
 
 *The work for the Mjollnir project is still ongoing*
 
+# Description
+
 The Launchpad Controller runs on a Teensy LC microcontroller from [PJRC](https://www.pjrc.com/teensy/teensyLC.html) and the code is built around the cross-platform development tool [PlatformIO](https://platformio.org/)
+
+The following outputs are available on the board:
+
+- 2x 12V/15A DC
+- 2x 24V/15A DC
+- 3x 6V servo-compatible outputs
+- 3x 12V-24V/2A H-bridge (output voltage selectable by jumper)
 
 # Installation
 
