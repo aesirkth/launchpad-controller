@@ -63,7 +63,7 @@ void initRGB() {
   strip.setBrightness(20);
   strip.show();
   delay(100);
-  strip.setPixelColor(0, 0x66ccff);
+  strip.setPixelColor(0, STARTUP_COLOR);
   strip.show();
 }
 

@@ -72,7 +72,7 @@ void initRGB() {
   strip.setBrightness(20);
   strip.show();
   delay(100);
-  strip.setPixelColor(0, 0x66ccff);
+  strip.setPixelColor(0, STARTUP_COLOR);
   strip.show();
 }
 
@@ -134,6 +134,10 @@ uint8_t getCommand(char* data) {
         for (uint8_t i = 0; i < CMD_DATA_LEN; i++) {
           data[i] = rf95_buf[i];
         }
+        strip.setPixelColor(0, 0xff0000);
+        strip.show();
+        delay(30);
+        showStatus();
       }
       return 1;
     } else {
@@ -145,10 +149,13 @@ uint8_t getCommand(char* data) {
 }
 
 void sendPayload(uint8_t payload[]) {  // Write the payload to the communication links
-  delay(10);
   if (rfm_init_success) {
+    strip.setPixelColor(0, 0x0000ff);
+    strip.show();
+    delay(20);
     rfm.send(payload, 5);
     rfm.waitPacketSent();
+    showStatus();
   }
 
   Serial.write(payload, 5);
