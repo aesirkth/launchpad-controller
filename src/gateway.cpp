@@ -5,6 +5,7 @@
 #include <SPI.h>
 
 #include "hardware_definition.h"
+#include "utils.h"
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
@@ -12,33 +13,45 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB 
 
 uint8_t rfm_init_success = 0;
 
+char data[CMD_DATA_LEN];
+
 void setup() {
   initRGB();
-  initMainOutputs();
-
   initCommunications();
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    uint8_t radiopacket = Serial.read();
+  switch (getSerialCommand(Serial, data)) {
+    case CMD_ID_CONTROLLER:
+      if (rfm_init_success) {
+        strip.setPixelColor(0, 0x0000ff);
+        strip.show();
+        delay(20);
+        rfm.send((uint8_t*)data, CMD_DATA_LEN);
+        rfm.waitPacketSent();
+        showStatus();
+      }
+      break;
 
-    strip.setPixelColor(0, 0x0000ff);
-    strip.show();
-    delay(20);
-    rfm.send(&radiopacket, 1);
-    rfm.waitPacketSent();
-    showStatus();
+    case CMD_ID_GATEWAY:
+      interpretSerialCommand(data);
+      break;
+
+    default:
+      break;
   }
-  if (rfm.waitAvailableTimeout(100)) {
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-    if (rfm.recv(buf, &len)) {
-      Serial.write(buf, len);
-      strip.setPixelColor(0, 0xff0000);
-      strip.show();
-      delay(30);
-      showStatus();
+
+  if (rfm_init_success) {
+    if (rfm.waitAvailableTimeout(100)) {
+      uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+      uint8_t len = sizeof(buf);
+      if (rfm.recv(buf, &len)) {
+        Serial.write(buf, len);
+        strip.setPixelColor(0, 0xff0000);
+        strip.show();
+        delay(30);
+        showStatus();
+      }
     }
   }
 }
@@ -48,24 +61,10 @@ void initRGB() {
   delay(10);
   strip.clear();
   strip.setBrightness(20);
-  delay(10);
-  strip.setPixelColor(0, 0x000000);
   strip.show();
   delay(100);
-  strip.setPixelColor(0, 0x66ccff);
+  strip.setPixelColor(0, STARTUP_COLOR);
   strip.show();
-}
-
-void initMainOutputs() {
-  pinMode(PIN_OUTPUT1, OUTPUT);
-  pinMode(PIN_OUTPUT2, OUTPUT);
-  pinMode(PIN_OUTPUT3, OUTPUT);
-  pinMode(PIN_OUTPUT4, OUTPUT);
-
-  digitalWrite(PIN_OUTPUT1, LOW);
-  digitalWrite(PIN_OUTPUT2, LOW);
-  digitalWrite(PIN_OUTPUT3, LOW);
-  digitalWrite(PIN_OUTPUT4, LOW);
 }
 
 void resetRFM() {
@@ -91,10 +90,6 @@ void initRFM() {
 void initCommunications() {
   Serial.begin(BAUDRATE);
 
-  while (!Serial.available()) {
-  }
-  Serial.println(BONJOUR);
-
   resetRFM();
   initRFM();
 }
@@ -106,4 +101,15 @@ void showStatus() {
     strip.setPixelColor(0, 0x00ff00);
   }
   strip.show();
+}
+
+void interpretSerialCommand(char* data) {
+  switch (data[0]) {
+    case CMD_SEND_BONJOUR:
+      Serial.println(BONJOUR);
+      break;
+
+    default:
+      break;
+  }
 }
