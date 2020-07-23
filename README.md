@@ -17,7 +17,9 @@ The Launchpad Controller is an upgraded version of what was used for the Sigmund
   - [ID byte](#id-byte)
   - [Available commands](#available-commands)
     - [Send BONJOUR string](#send-bonjour-string)
-    - [Toggle main outputs](#toggle-main-outputs)
+    - [Activate/deactivate the main outputs](#activatedeactivate-the-main-outputs)
+    - [Turn the servos](#turn-the-servos)
+    - [State frame](#state-frame)
   - [Examples](#examples)
 - [Folder structure](#folder-structure)
 
@@ -89,7 +91,7 @@ Makes the controller or the gateway send an identification string over serial
 
 *Returns:* `"LAUNCHPADCONTROLLER"`
 
-### Toggle main outputs
+### Activate/deactivate the main outputs
 
 Set one of the main outputs high or low
 
@@ -97,15 +99,53 @@ Set one of the main outputs high or low
 
 *Data byte 1:*
 
-- `0x61` ("`a`"): for output 1
-- `0x62` ("`b`"): for output 2
-- `0x63` ("`c`"): for output 3
-- `0x64` ("`d`"): for output 4
+- `0x61` (`"a"`): for output 1 [P1]
+- `0x62` (`"b"`): for output 2 [P2]
+- `0x63` (`"c"`): for output 3 [P3]
+- `0x64` (`"d"`): for output 4 [P4]
 
 *Data byte 2:*
 
 - `0x00`: set output low. A logic AND is applied to the LSb so (`"0"`) works to set the output low
 - `0x01`: set output high. A logic AND is applied to the LSb so (`"1"`) works to set the output high
+
+*Returns:* State frame (see **State frame** [below](#state-frame))
+
+### Turn the servos
+
+Update the rotation of one of the servos
+
+*Target:* controller
+
+*Data byte 1:*
+
+- `0x6A` (`"j"`): servo 1 [P5]
+- `0x6B` (`"k"`): servo 2 [P6]
+- `0x6C` (`"l"`): servo 3 [P7]
+
+*Data byte 2:*
+
+- `0x00` - `0xB4`: angle of the servo
+
+*Returns:* State frame (see **State frame** [below](#state-frame))
+
+The pulse width is set to be between adjustable boundaries. You can modify them in `platformio.ini`
+
+```ini
+...
+[env]
+...
+build_flags = 
+  ...
+  -D SERVO_MIN_PULSE_WIDTH=1000 ; microseconds
+  -D SERVO_MAX_PULSE_WIDTH=2000 ; microseconds
+```
+
+### State frame
+
+This is the frame returned by the Launchpad Controller after it has received a valid command
+
+TODO
 
 ## Examples
 
@@ -119,6 +159,12 @@ Set output 1 high
 
 ```cpp
 0x26, 0x63, 0x61, 0x01 // Or "&ca1"
+```
+
+Turn servo 3 to the middle position (90°)
+
+```cpp
+0x26, 0x63, 0x6C, 0x5A // Or "&clZ"
 ```
 
 # Folder structure

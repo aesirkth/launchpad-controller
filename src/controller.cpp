@@ -1,6 +1,7 @@
 #include "controller.h"
 
 #include <Adafruit_NeoPixel.h>
+#include <PWMServo.h>
 #include <RH_RF95.h>  // RadioHead library  to control the LoRa transceiver
 #include <SPI.h>
 
@@ -17,6 +18,8 @@ RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
 
+PWMServo servo1, servo2, servo3;
+
 uint8_t rfm_init_success = 0;
 uint8_t output1_state = 0;
 uint8_t output2_state = 0;
@@ -31,6 +34,7 @@ char data[CMD_DATA_LEN];
 void setup() {
   initRGB();
   initMainOutputs();
+  initServos();
 
   initCommunications();
 }
@@ -56,6 +60,18 @@ void loop() {
 
       case CMD_TOGGLE_OUTPUT4:
         toggleOutput(PIN_OUTPUT4, data[1] & 0x01);
+        break;
+
+      case CMD_MOVE_SERVO1:
+        moveServo(servo1, data[1]);
+        break;
+
+      case CMD_MOVE_SERVO2:
+        moveServo(servo2, data[1]);
+        break;
+
+      case CMD_MOVE_SERVO3:
+        moveServo(servo3, data[1]);
         break;
 
       default:
@@ -86,6 +102,12 @@ void initMainOutputs() {
   digitalWrite(PIN_OUTPUT2, LOW);
   digitalWrite(PIN_OUTPUT3, LOW);
   digitalWrite(PIN_OUTPUT4, LOW);
+}
+
+void initServos() {
+  servo1.attach(PIN_PWM1, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+  servo2.attach(PIN_PWM2, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+  servo3.attach(PIN_PWM3, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
 }
 
 void resetRFM() {
@@ -211,5 +233,13 @@ void toggleOutput(uint8_t pin, uint8_t en) {
 
     default:
       break;
+  }
+}
+
+void moveServo(PWMServo& servo, uint8_t angle) {
+  if (angle < 180) {
+    servo.write(angle);
+  } else {
+    servo.write(180);
   }
 }

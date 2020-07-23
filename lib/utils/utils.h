@@ -11,5 +11,8 @@
 #define CMD_TOGGLE_OUTPUT2 0x62  // 'b'
 #define CMD_TOGGLE_OUTPUT3 0x63  // 'c'
 #define CMD_TOGGLE_OUTPUT4 0x64  // 'd'
+#define CMD_MOVE_SERVO1 0x6A     // 'j'
+#define CMD_MOVE_SERVO2 0x6B     // 'k'
+#define CMD_MOVE_SERVO3 0x6C     // 'l'
 
 uint8_t getSerialCommand(Stream& port, char* data);
