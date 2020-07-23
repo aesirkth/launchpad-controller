@@ -63,7 +63,6 @@ void loop() {
     }
     sendState();
   }
-  delay(10);
 }
 
 void initRGB() {
@@ -136,6 +135,7 @@ uint8_t getCommand(char* data) {
           data[i] = rf95_buf[i];
         }
       }
+      return 1;
     } else {
       return getSerialCommand(Serial, data);  // Ignore the ID
     }
