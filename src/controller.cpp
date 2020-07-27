@@ -16,6 +16,8 @@
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
+Comms comms(Serial, rfm, PIN_RFM_RESET, RFM_FREQ, RFM_TX_POWER);
+
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
 
 PWMServo servo1, servo2, servo3;
@@ -30,17 +32,20 @@ uint8_t line_feed = 0x0A;
 uint8_t carriage_ret = 0x0D;
 
 char data[CMD_DATA_LEN];
+uint8_t id;
 
 void setup() {
   initRGB();
   initMainOutputs();
   initServos();
 
-  initCommunications();
+  Serial.begin(BAUDRATE);
+
+  comms.begin();
 }
 
 void loop() {
-  if (getCommand(data)) {
+  if (comms.readCommand(data, &id)) {
     switch (data[0]) {
       case CMD_SEND_BONJOUR:
         Serial.println(BONJOUR);
@@ -110,33 +115,6 @@ void initServos() {
   servo3.attach(PIN_PWM3, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
 }
 
-void resetRFM() {
-  pinMode(PIN_RFM_RESET, OUTPUT);
-  digitalWrite(PIN_RFM_RESET, HIGH);
-  delay(100);
-  digitalWrite(PIN_RFM_RESET, LOW);
-  delay(10);
-  digitalWrite(PIN_RFM_RESET, HIGH);
-  delay(100);
-}
-
-void initRFM() {
-  rfm_init_success = rfm.init();
-  if (rfm_init_success) {
-    // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
-    rfm.setFrequency(RFM_FREQ);
-    rfm.setTxPower(RFM_TX_POWER, false);
-  }
-  showStatus();
-}
-
-void initCommunications() {
-  Serial.begin(BAUDRATE);
-
-  resetRFM();
-  initRFM();
-}
-
 void showStatus() {
   if (not rfm_init_success) {
     strip.setPixelColor(0, 0xff0000);
@@ -144,30 +122,6 @@ void showStatus() {
     strip.setPixelColor(0, 0x00ff00);
   }
   strip.show();
-}
-
-uint8_t getCommand(char* data) {
-  if (rfm_init_success) {
-    if (rfm.waitAvailableTimeout(100)) {
-      uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
-      uint8_t rf95_len = sizeof(rf95_buf);
-
-      if (rfm.recv(rf95_buf, &rf95_len)) {
-        for (uint8_t i = 0; i < CMD_DATA_LEN; i++) {
-          data[i] = rf95_buf[i];
-        }
-        strip.setPixelColor(0, 0xff0000);
-        strip.show();
-        delay(30);
-        showStatus();
-      }
-      return 1;
-    } else {
-      return getSerialCommand(Serial, data);  // Ignore the ID
-    }
-  } else {
-    return getSerialCommand(Serial, data);  // Ignore the ID
-  }
 }
 
 void sendPayload(uint8_t payload[]) {  // Write the payload to the communication links

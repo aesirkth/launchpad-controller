@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <RH_RF95.h>
 
 #define CMD_FRAME_LEN 4
 #define CMD_DATA_LEN 2
@@ -15,4 +16,24 @@
 #define CMD_MOVE_SERVO2 0x6B     // 'k'
 #define CMD_MOVE_SERVO3 0x6C     // 'l'
 
-uint8_t getSerialCommand(Stream& port, char* data);
+class Comms {
+ public:
+  Comms(Stream& ser, RH_RF95& rfm, uint8_t rst_pin, float freq, int8_t pow);
+
+  void begin();
+  uint8_t readCommand(char* data, uint8_t* id);
+
+  uint8_t rfm_success;  // True when the RFM transeiver is successfully initiated
+
+ private:
+  void reset();
+  uint8_t readRFMBuffer(char* data);
+  uint8_t readSerialCommand(char* data, uint8_t* id);
+
+  Stream* _ser;
+  RH_RF95* _rfm;
+
+  uint8_t _rst;
+  float _freq;
+  int8_t _pow;
+};
