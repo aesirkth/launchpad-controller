@@ -5,8 +5,8 @@
 #include <RH_RF95.h>  // RadioHead library  to control the LoRa transceiver
 #include <SPI.h>
 
+#include "comms.h"
 #include "hardware_definition.h"
-#include "utils.h"
 
 #define BIT_OUTPUT1 1
 #define BIT_OUTPUT2 2
