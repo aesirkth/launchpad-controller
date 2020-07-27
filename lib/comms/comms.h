@@ -1,3 +1,4 @@
+#include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 #include <RH_RF95.h>
 
@@ -18,9 +19,10 @@
 
 class Comms {
  public:
-  Comms(Stream& ser, RH_RF95& rfm, uint8_t rst_pin, float freq, int8_t pow);
+  Comms(Stream& ser, RH_RF95& rfm, uint8_t rst_pin, float freq, int8_t pow, Adafruit_NeoPixel& led);
 
   void begin();
+  void showRFMState();
   uint8_t readCommand(char* data, uint8_t* id);
   void sendState(uint8_t out, uint8_t* servo);
 
@@ -30,10 +32,10 @@ class Comms {
   void reset();
   uint8_t readRFMBuffer(char* data);
   uint8_t readSerialCommand(char* data, uint8_t* id);
-  void sendPayload(uint8_t* payload, uint8_t len);
 
   Stream* _ser;
   RH_RF95* _rfm;
+  Adafruit_NeoPixel* _led;
 
   uint8_t _rst;
   float _freq;

@@ -19,10 +19,9 @@
 #define MASK_OUTPUT4 ~(1 << BIT_OUTPUT4)
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
+Adafruit_NeoPixel led = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
 
-Comms comms(Serial, rfm, PIN_RFM_RESET, RFM_FREQ, RFM_TX_POWER);
-
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
+Comms comms(Serial, rfm, PIN_RFM_RESET, RFM_FREQ, RFM_TX_POWER, led);
 
 PWMServo servo1, servo2, servo3;
 
@@ -31,16 +30,14 @@ uint8_t rfm_init_success = 0;
 uint8_t output_state = 0;
 uint8_t servo_state[3] = {0, 0, 0};
 
-uint8_t line_feed = 0x0A;
-uint8_t carriage_ret = 0x0D;
-
 char data[CMD_DATA_LEN];
 uint8_t id;
 
 void setup() {
-  initRGB();
   initMainOutputs();
   initServos();
+
+  led.setBrightness(20);  // Reduce the led brightness. Can be maxed out later for outdoors use
 
   Serial.begin(BAUDRATE);
 
@@ -89,17 +86,6 @@ void loop() {
   }
 }
 
-void initRGB() {
-  strip.begin();
-  delay(10);
-  strip.clear();
-  strip.setBrightness(20);
-  strip.show();
-  delay(100);
-  strip.setPixelColor(0, STARTUP_COLOR);
-  strip.show();
-}
-
 void initMainOutputs() {
   pinMode(PIN_OUTPUT1, OUTPUT);
   pinMode(PIN_OUTPUT2, OUTPUT);
@@ -116,15 +102,6 @@ void initServos() {
   servo1.attach(PIN_PWM1, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
   servo2.attach(PIN_PWM2, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
   servo3.attach(PIN_PWM3, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
-}
-
-void showStatus() {
-  if (not rfm_init_success) {
-    strip.setPixelColor(0, 0xff0000);
-  } else {
-    strip.setPixelColor(0, 0x00ff00);
-  }
-  strip.show();
 }
 
 void toggleOutput(uint8_t pin, uint8_t en) {

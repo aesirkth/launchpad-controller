@@ -3,19 +3,22 @@
 /*
   Class to encapsulate the communications to and from the Launchpad Controller
 
-  Works with both the Serial ser and the RFM9xW LoRa transceiver
+  Works with both the Serial interface and the RFM9xW LoRa transceiver
 
-  @param ser      Stream object (Serial) to read data from
-  @param rfm      RH_RF95 object instanciated with the right arguments for the board
-  @param rst_pin  Reset pin of the LoRa transceiver
-  @param freq     Frequency of the LoRa transceiver
-  @param pow      Tx Power of the LoRa transceiver
+  @param ser  Stream object (Serial) to read data from
+  @param rfm  RH_RF95 object instanciated with the right arguments for the board
+  @param rst  Reset pin of the LoRa transceiver
+  @param freq Frequency of the LoRa transceiver
+  @param pow  Tx Power of the LoRa transceiver
+  @param led  Neopixel object with one RGB led
 */
-Comms::Comms(Stream& ser, RH_RF95& rfm, uint8_t rst_pin, float freq, int8_t pow) {
+Comms::Comms(Stream& ser, RH_RF95& rfm, uint8_t rst, float freq, int8_t pow, Adafruit_NeoPixel& led) {
   _ser = &ser;
   _rfm = &rfm;
+  _rst = rst;
   _freq = freq;
   _pow = pow;
+  _led = &led;
 
   pinMode(_rst, OUTPUT);
   digitalWrite(_rst, HIGH);  // Default state
@@ -25,9 +28,15 @@ Comms::Comms(Stream& ser, RH_RF95& rfm, uint8_t rst_pin, float freq, int8_t pow)
 /* ---------------- Functions to deal with the LoRa Transceiver ---------------- */
 
 /*
-  Get everything ready to use the communication interfaces
+  Get everything ready to use the LoRa and Serial interfaces
 */
 void Comms::begin() {
+  // Clear the led
+  _led->begin();
+  _led->clear();
+  _led->show();
+
+  // Reset the LoRa transceiver
   reset();
 
   rfm_success = _rfm->init();
@@ -37,6 +46,8 @@ void Comms::begin() {
     _rfm->setFrequency(_freq);
     _rfm->setTxPower(_pow);
   }
+
+  showRFMState();
 }
 
 /*
@@ -47,6 +58,15 @@ void Comms::reset() {
   delay(10);
   digitalWrite(_rst, HIGH);
   delay(100);
+}
+
+void Comms::showRFMState() {
+  if (rfm_success) {
+    _led->setPixelColor(0, 0x00ff00);
+  } else {
+    _led->setPixelColor(0, 0xff0000);
+  }
+  _led->show();
 }
 
 /*
@@ -157,20 +177,32 @@ uint8_t Comms::readCommand(char* data, uint8_t* id) {
   }
 }
 
-/*
-  Send an array of bytes through the LoRa and Serial interfaces
+/* 
+  Send back a packet with the current state of the Launchpad Controller
 
-  @param payload  array to send
-  @param len      lenght of the array
+  The packet is sent to the LoRa transceiver and to the Serial interface. The packet
+  sent is as follows:
+    ------------------------------
+    | Byte |       Content       |
+    ------------------------------
+    |   0  | bit 0: rfm_success  |
+    |      | bit 1: output1      |
+    |      | bit 2: output2      |
+    |      | bit 3: output3      |
+    |      | bit 4: output4      |
+    ------------------------------
+    |   1  | RSSI (signed, MSB)  |
+    ------------------------------
+    |   2  | RSSI (signed, LSB)  |
+    ------------------------------
+    |   3  | Carriage return 0x0D|
+    ------------------------------
+    |   4  | Line feed 0x0A      |
+    ------------------------------
+
+  @param out    State of the outputs encoded on bits 1, 2, 3 & 4
+  @param servo  Angle of the servos
 */
-void Comms::sendPayload(uint8_t* payload, uint8_t len) {
-  if (rfm_success) {
-    _rfm->send(payload, len);
-    _rfm->waitPacketSent();
-  }
-  _ser->write(payload, len);
-}
-
 void Comms::sendState(uint8_t out, uint8_t* servo) {
   uint8_t payload[5];
   payload[0] = (out & 0b00011110) | (0b00000001 & rfm_success);
@@ -191,5 +223,9 @@ void Comms::sendState(uint8_t out, uint8_t* servo) {
   payload[3] = 0x0D;
   payload[4] = 0x0A;
 
-  sendPayload(payload, 5);
+  if (rfm_success) {
+    _rfm->send(payload, 5);
+    _rfm->waitPacketSent();
+  }
+  _ser->write(payload, 5);
 }
