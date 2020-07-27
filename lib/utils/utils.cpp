@@ -128,6 +128,8 @@ uint8_t Comms::readSerialCommand(char* data, uint8_t* id) {
   }
 }
 
+/* ----------------------------- General functions ----------------------------- */
+
 /* 
   Read a command in the LoRa buffer and the Serial buffer
 
@@ -153,4 +155,41 @@ uint8_t Comms::readCommand(char* data, uint8_t* id) {
   } else {
     return 0;
   }
+}
+
+/*
+  Send an array of bytes through the LoRa and Serial interfaces
+
+  @param payload  array to send
+  @param len      lenght of the array
+*/
+void Comms::sendPayload(uint8_t* payload, uint8_t len) {
+  if (rfm_success) {
+    _rfm->send(payload, len);
+    _rfm->waitPacketSent();
+  }
+  _ser->write(payload, len);
+}
+
+void Comms::sendState(uint8_t out, uint8_t* servo) {
+  uint8_t payload[5];
+  payload[0] = (out & 0b00011110) | (0b00000001 & rfm_success);
+
+  int16_t rssi;
+  if (rfm_success) {
+    rssi = _rfm->lastRssi();
+  } else {
+    rssi = 0;
+  }
+
+  uint8_t rssi_msb = (rssi & 0xFF00) >> 8;
+  uint8_t rssi_lsb = rssi & 0x00FF;
+
+  payload[1] = rssi_msb;
+  payload[2] = rssi_lsb;
+
+  payload[3] = 0x0D;
+  payload[4] = 0x0A;
+
+  sendPayload(payload, 5);
 }

@@ -8,11 +8,15 @@
 #include "hardware_definition.h"
 #include "utils.h"
 
-#define BIT_RFM_INIT 0
 #define BIT_OUTPUT1 1
 #define BIT_OUTPUT2 2
 #define BIT_OUTPUT3 3
 #define BIT_OUTPUT4 4
+
+#define MASK_OUTPUT1 ~(1 << BIT_OUTPUT1)
+#define MASK_OUTPUT2 ~(1 << BIT_OUTPUT2)
+#define MASK_OUTPUT3 ~(1 << BIT_OUTPUT3)
+#define MASK_OUTPUT4 ~(1 << BIT_OUTPUT4)
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
@@ -23,10 +27,9 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB 
 PWMServo servo1, servo2, servo3;
 
 uint8_t rfm_init_success = 0;
-uint8_t output1_state = 0;
-uint8_t output2_state = 0;
-uint8_t output3_state = 0;
-uint8_t output4_state = 0;
+
+uint8_t output_state = 0;
+uint8_t servo_state[3] = {0, 0, 0};
 
 uint8_t line_feed = 0x0A;
 uint8_t carriage_ret = 0x0D;
@@ -82,7 +85,7 @@ void loop() {
       default:
         break;
     }
-    sendState();
+    comms.sendState(output_state, servo_state);
   }
 }
 
@@ -124,64 +127,25 @@ void showStatus() {
   strip.show();
 }
 
-void sendPayload(uint8_t payload[]) {  // Write the payload to the communication links
-  if (rfm_init_success) {
-    strip.setPixelColor(0, 0x0000ff);
-    strip.show();
-    delay(20);
-    rfm.send(payload, 5);
-    rfm.waitPacketSent();
-    showStatus();
-  }
-
-  Serial.write(payload, 5);
-}
-
-void sendState() {  // Get the current state of the Launch Pad Station Board and
-  // send it to the control interface
-  uint8_t state = 0;
-  state = state | rfm_init_success << BIT_RFM_INIT;
-  state = state | output1_state << BIT_OUTPUT1;
-  state = state | output2_state << BIT_OUTPUT2;
-  state = state | output3_state << BIT_OUTPUT3;
-  state = state | output4_state << BIT_OUTPUT4;
-  int16_t rssi;
-  if (rfm_init_success) {
-    rssi = rfm.lastRssi();
-  } else {
-    rssi = 0;
-  }
-
-  uint8_t rssi_msb = (rssi & 0xFF00) >> 8;
-  uint8_t rssi_lsb = rssi & 0x00FF;
-  uint8_t message[5];
-  message[0] = state;
-  message[1] = rssi_msb;
-  message[2] = rssi_lsb;
-  message[3] = carriage_ret;
-  message[4] = line_feed;
-  sendPayload(message);
-}
-
 void toggleOutput(uint8_t pin, uint8_t en) {
   switch (pin) {
     case PIN_OUTPUT1:
-      output1_state = en;
+      output_state = (output_state & MASK_OUTPUT1) | (en << BIT_OUTPUT1);
       digitalWrite(pin, en);
       break;
 
     case PIN_OUTPUT2:
-      output2_state = en;
+      output_state = (output_state & MASK_OUTPUT2) | (en << BIT_OUTPUT2);
       digitalWrite(pin, en);
       break;
 
     case PIN_OUTPUT3:
-      output3_state = en;
+      output_state = (output_state & MASK_OUTPUT3) | (en << BIT_OUTPUT3);
       digitalWrite(pin, en);
       break;
 
     case PIN_OUTPUT4:
-      output4_state = en;
+      output_state = (output_state & MASK_OUTPUT4) | (en << BIT_OUTPUT4);
       digitalWrite(pin, en);
       break;
 

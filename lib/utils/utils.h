@@ -22,6 +22,7 @@ class Comms {
 
   void begin();
   uint8_t readCommand(char* data, uint8_t* id);
+  void sendState(uint8_t out, uint8_t* servo);
 
   uint8_t rfm_success;  // True when the RFM transeiver is successfully initiated
 
@@ -29,6 +30,7 @@ class Comms {
   void reset();
   uint8_t readRFMBuffer(char* data);
   uint8_t readSerialCommand(char* data, uint8_t* id);
+  void sendPayload(uint8_t* payload, uint8_t len);
 
   Stream* _ser;
   RH_RF95* _rfm;
