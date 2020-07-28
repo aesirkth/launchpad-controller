@@ -222,30 +222,3 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
   Serial.write(0x0D);
   Serial.write(0x0A);
 }
-
-void toggleOutput(uint8_t pin, uint8_t en) {
-  switch (pin) {
-    case PIN_OUTPUT1:
-      output1_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    case PIN_OUTPUT2:
-      output2_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    case PIN_OUTPUT3:
-      output3_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    case PIN_OUTPUT4:
-      output4_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    default:
-      break;
-  }
-}
