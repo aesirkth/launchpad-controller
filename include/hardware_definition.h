@@ -29,4 +29,3 @@
 
 /* Other definitions */
 #define NUM_RGB_LEDS 1
-#define RFM_FREQ 433.0f
