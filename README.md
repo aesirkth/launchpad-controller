@@ -145,7 +145,7 @@ build_flags =
 The Launchpad Controler responds to all received commands with a data frame containing the updated state of its outputs
 
 ```
-[Data byte 0][Data byte 1][]...][Data byte N][0x0A][0x0D]
+[Data byte 0][Data byte 1]...[Data byte N][0x0A][0x0D]
 ```
 
 *Data byte 0:*
