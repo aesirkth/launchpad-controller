@@ -21,7 +21,7 @@ The Launchpad Controller is an upgraded version of what was used for the Sigmund
     - [Send BONJOUR string](#send-bonjour-string)
     - [Activate/deactivate the main outputs](#activatedeactivate-the-main-outputs)
     - [Turn the servos](#turn-the-servos)
-    - [State frame](#state-frame)
+  - [State frame](#state-frame)
   - [Examples](#examples)
 - [Folder structure](#folder-structure)
 
@@ -140,7 +140,7 @@ build_flags =
   -D SERVO_MAX_PULSE_WIDTH=2000 ; microseconds
 ```
 
-### State frame
+## State frame
 
 The Launchpad Controler responds to all received commands with a data frame containing the updated state of its outputs
 
@@ -158,8 +158,10 @@ The Launchpad Controler responds to all received commands with a data frame cont
 *Data byte 1:* `uint8_t` Current angle of servo 1<br>
 *Data byte 2:* `uint8_t` Current angle of servo 2<br>
 *Data byte 3:* `uint8_t` Current angle of servo 3<br>
-*Data byte 4:* `int8_t` Latest RSSI value of the Launchpad Controller (`0` if LoRa init failed)<br>
-*Data byte 5:* `int8_t` Latest RSSI value of the Launchpad Gateway (`0` if LoRa init failed)
+*Data byte 4-5:* `int16_t` Battery 1 voltage, raw 12 bits measurement referenced to input voltage, MSB first<br>
+*Data byte 6-7:* `int16_t` Battery 2 voltage, raw 12 bits measurement referenced to input voltage, MSB first<br>
+*Data byte 8:* `int8_t` Latest RSSI value of the Launchpad Controller (`0` if LoRa init failed)<br>
+*Data byte 9:* `int8_t` Latest RSSI value of the Launchpad Gateway (`0` if LoRa init failed)
 
 ## Examples
 
