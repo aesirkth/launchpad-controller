@@ -25,9 +25,9 @@ uint8_t output1_state = 0;
 uint8_t output2_state = 0;
 uint8_t output3_state = 0;
 uint8_t output4_state = 0;
-
-uint8_t line_feed = 0x0A;
-uint8_t carriage_ret = 0x0D;
+uint8_t servo1_angle = 0;
+uint8_t servo2_angle = 0;
+uint8_t servo3_angle = 0;
 
 char data[CMD_DATA_LEN];
 
@@ -47,31 +47,38 @@ void loop() {
         break;
 
       case CMD_TOGGLE_OUTPUT1:
-        toggleOutput(PIN_OUTPUT1, data[1] & 0x01);
+        output1_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT1, output1_state);
         break;
 
       case CMD_TOGGLE_OUTPUT2:
-        toggleOutput(PIN_OUTPUT2, data[1] & 0x01);
+        output2_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT2, output2_state);
         break;
 
       case CMD_TOGGLE_OUTPUT3:
-        toggleOutput(PIN_OUTPUT3, data[1] & 0x01);
+        output3_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT3, output3_state);
         break;
 
       case CMD_TOGGLE_OUTPUT4:
-        toggleOutput(PIN_OUTPUT4, data[1] & 0x01);
+        output4_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT4, output4_state);
         break;
 
       case CMD_MOVE_SERVO1:
-        moveServo(servo1, data[1]);
+        servo1_angle = constrain(data[1], 0, 180);
+        servo1.write(servo1_angle);
         break;
 
       case CMD_MOVE_SERVO2:
-        moveServo(servo2, data[1]);
+        servo2_angle = constrain(data[1], 0, 180);
+        servo2.write(servo2_angle);
         break;
 
       case CMD_MOVE_SERVO3:
-        moveServo(servo3, data[1]);
+        servo3_angle = constrain(data[1], 0, 180);
+        servo3.write(servo3_angle);
         break;
 
       default:
@@ -170,19 +177,6 @@ uint8_t getCommand(char* data) {
   }
 }
 
-void sendPayload(uint8_t payload[]) {  // Write the payload to the communication links
-  if (rfm_init_success) {
-    strip.setPixelColor(0, 0x0000ff);
-    strip.show();
-    delay(20);
-    rfm.send(payload, 5);
-    rfm.waitPacketSent();
-    showStatus();
-  }
-
-  Serial.write(payload, 5);
-}
-
 void sendState() {  // Get the current state of the Launch Pad Station Board and
   // send it to the control interface
   uint8_t state = 0;
@@ -191,55 +185,35 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
   state = state | output2_state << BIT_OUTPUT2;
   state = state | output3_state << BIT_OUTPUT3;
   state = state | output4_state << BIT_OUTPUT4;
-  int16_t rssi;
+
+  int8_t rssi;
   if (rfm_init_success) {
     rssi = rfm.lastRssi();
   } else {
     rssi = 0;
   }
 
-  uint8_t rssi_msb = (rssi & 0xFF00) >> 8;
-  uint8_t rssi_lsb = rssi & 0x00FF;
-  uint8_t message[5];
+  uint8_t m_size = 5;
+  uint8_t message[m_size];
+
   message[0] = state;
-  message[1] = rssi_msb;
-  message[2] = rssi_lsb;
-  message[3] = carriage_ret;
-  message[4] = line_feed;
-  sendPayload(message);
-}
+  message[1] = servo1_angle;
+  message[2] = servo2_angle;
+  message[3] = servo3_angle;
+  message[4] = rssi;
 
-void toggleOutput(uint8_t pin, uint8_t en) {
-  switch (pin) {
-    case PIN_OUTPUT1:
-      output1_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    case PIN_OUTPUT2:
-      output2_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    case PIN_OUTPUT3:
-      output3_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    case PIN_OUTPUT4:
-      output4_state = en;
-      digitalWrite(pin, en);
-      break;
-
-    default:
-      break;
+  if (rfm_init_success) {
+    strip.setPixelColor(0, 0x0000ff);
+    strip.show();
+    delay(20);
+    rfm.send(message, m_size);
+    rfm.waitPacketSent();
+    showStatus();
   }
-}
 
-void moveServo(PWMServo& servo, uint8_t angle) {
-  if (angle < 180) {
-    servo.write(angle);
-  } else {
-    servo.write(180);
-  }
+  Serial.write(message, m_size);
+  Serial.write(0x00);
+  // Include a carriage return and a line feed so the receiver can split out frames
+  Serial.write(0x0D);
+  Serial.write(0x0A);
 }

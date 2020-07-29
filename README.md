@@ -10,6 +10,8 @@ The Launchpad Controller is an upgraded version of what was used for the Sigmund
 
 *The work for the Mjollnir project is still ongoing*
 
+# Contents <!-- omit in toc -->
+
 - [Description](#description)
 - [Installation](#installation)
 - [Commands](#commands)
@@ -34,6 +36,12 @@ The following outputs are available on the board:
 - 3x 6V servo-compatible outputs
 - 3x 12V-24V/2A H-bridge (output voltage selectable by jumper)
 
+There are two ways to connect the Launchpad Controller to a computer:
+- Through the USB port on the Teensy LC. It appears as a Serial device. This is the preferred way for testing purposes
+- Through a LoRa link. In this case, a second Launchpad Controller (or any equivalent board) is needed. It appears as a Serial device. The Launchpad Controller on the computer side acts as a gateway and forwards all commands received on its Serial interface to the actual Launchpad Controller via LoRa
+
+The Serial baudrate is set in `platformio.ini` but is not actually used with Teensy microcontrollers. Keep it here to use other microcontrollers with no modifications
+
 # Installation
 
 Install PlatformIO Core on your system. The documentation is [here](https://platformio.org/install/cli)
@@ -57,7 +65,7 @@ platformio run -t upload -e gateway
 The commands sent by the host computer must respect the following structure:
 
 ```
-[Start byte][ID byte][Data byte 1][Data byte 2]
+[Start byte][ID byte][Data byte 0][Data byte 1]
 ```
 
 The commands are sent through the USB serial interface of the Teensy LC
@@ -83,29 +91,23 @@ The data bytes contain the commands. Here are the commands available. All the co
 
 Makes the controller or the gateway send an identification string over serial
 
-*Target:* controller, gateway
-
-*Data byte 1:* `0x42` (`"B"`)
-
-*Data byte 2:* `0x00` unused, can be any value
-
+*Target:* controller, gateway<br>
+*Data byte 1:* `0x42` (`"B"`)<br>
+*Data byte 2:* `0x00` unused, can be any value<br>
 *Returns:* `"LAUNCHPADCONTROLLER"`
 
 ### Activate/deactivate the main outputs
 
 Set one of the main outputs high or low
 
-*Target:* controller
-
-*Data byte 1:*
-
+*Target:* controller<br>
+*Data byte 0:*
 - `0x61` (`"a"`): for output 1 [P1]
 - `0x62` (`"b"`): for output 2 [P2]
 - `0x63` (`"c"`): for output 3 [P3]
 - `0x64` (`"d"`): for output 4 [P4]
 
-*Data byte 2:*
-
+*Data byte 1:*
 - `0x00`: set output low. A logic AND is applied to the LSb so (`"0"`) works to set the output low
 - `0x01`: set output high. A logic AND is applied to the LSb so (`"1"`) works to set the output high
 
@@ -115,16 +117,13 @@ Set one of the main outputs high or low
 
 Update the rotation of one of the servos
 
-*Target:* controller
-
-*Data byte 1:*
-
+*Target:* controller<br>
+*Data byte 0:*
 - `0x6A` (`"j"`): servo 1 [P5]
 - `0x6B` (`"k"`): servo 2 [P6]
 - `0x6C` (`"l"`): servo 3 [P7]
 
-*Data byte 2:*
-
+*Data byte 1:*
 - `0x00` - `0xB4`: angle of the servo
 
 *Returns:* State frame (see **State frame** [below](#state-frame))
@@ -143,9 +142,24 @@ build_flags =
 
 ### State frame
 
-This is the frame returned by the Launchpad Controller after it has received a valid command
+The Launchpad Controler responds to all received commands with a data frame containing the updated state of its outputs
 
-TODO
+```
+[Data byte 0][Data byte 1]...[Data byte N][0x0A][0x0D]
+```
+
+*Data byte 0:*
+- *bit 0:* rfm_success, 1 if the LoRa chip is successfully initialized
+- *bit 1:* output1, 1 if output 1 is enabled
+- *bit 2:* output2
+- *bit 3:* output3
+- *bit 4:* output4
+
+*Data byte 1:* `uint8_t` Current angle of servo 1<br>
+*Data byte 2:* `uint8_t` Current angle of servo 2<br>
+*Data byte 3:* `uint8_t` Current angle of servo 3<br>
+*Data byte 4:* `int8_t` Latest RSSI value of the Launchpad Controller (`0` if LoRa init failed)<br>
+*Data byte 5:* `int8_t` Latest RSSI value of the Launchpad Gateway (`0` if LoRa init failed)
 
 ## Examples
 
