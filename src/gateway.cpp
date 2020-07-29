@@ -46,7 +46,17 @@ void loop() {
       uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
       uint8_t len = sizeof(buf);
       if (rfm.recv(buf, &len)) {
+        int8_t rssi;
+        if (rfm_init_success) {
+          rssi = rfm.lastRssi();
+        } else {
+          rssi = 0;
+        }
         Serial.write(buf, len);
+        Serial.write(rssi);
+        // Include a carriage return and a line feed so the receiver can split out frames
+        Serial.write(0x0D);
+        Serial.write(0x0A);
         strip.setPixelColor(0, 0xff0000);
         strip.show();
         delay(30);

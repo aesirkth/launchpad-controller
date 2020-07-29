@@ -186,25 +186,21 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
   state = state | output3_state << BIT_OUTPUT3;
   state = state | output4_state << BIT_OUTPUT4;
 
-  int16_t rssi;
+  int8_t rssi;
   if (rfm_init_success) {
     rssi = rfm.lastRssi();
   } else {
     rssi = 0;
   }
 
-  uint8_t rssi_msb = (rssi & 0xFF00) >> 8;
-  uint8_t rssi_lsb = rssi & 0x00FF;
-
-  uint8_t m_size = 6;
+  uint8_t m_size = 5;
   uint8_t message[m_size];
 
   message[0] = state;
   message[1] = servo1_angle;
   message[2] = servo2_angle;
   message[3] = servo3_angle;
-  message[4] = rssi_msb;
-  message[5] = rssi_lsb;
+  message[4] = rssi;
 
   if (rfm_init_success) {
     strip.setPixelColor(0, 0x0000ff);
@@ -216,7 +212,6 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
   }
 
   Serial.write(message, m_size);
-  Serial.write(0x00);
   Serial.write(0x00);
   // Include a carriage return and a line feed so the receiver can split out frames
   Serial.write(0x0D);
