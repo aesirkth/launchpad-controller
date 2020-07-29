@@ -37,6 +37,8 @@ void setup() {
   initServos();
 
   initCommunications();
+
+  analogReadRes(12);
 }
 
 void loop() {
@@ -193,14 +195,26 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
     rssi = 0;
   }
 
-  uint8_t m_size = 5;
+  int16_t battery1 = analogRead(PIN_BAT1);
+  uint8_t battery1_msb = (battery1 & 0xFF00) >> 8;
+  uint8_t battery1_lsb = battery1 & 0x00FF;
+
+  int16_t battery2 = analogRead(PIN_BAT2);
+  uint8_t battery2_msb = (battery2 & 0xFF00) >> 8;
+  uint8_t battery2_lsb = battery2 & 0x00FF;
+
+  uint8_t m_size = 9;
   uint8_t message[m_size];
 
   message[0] = state;
   message[1] = servo1_angle;
   message[2] = servo2_angle;
   message[3] = servo3_angle;
-  message[4] = rssi;
+  message[4] = battery1_msb;
+  message[5] = battery1_lsb;
+  message[6] = battery2_msb;
+  message[7] = battery2_lsb;
+  message[8] = rssi;
 
   if (rfm_init_success) {
     strip.setPixelColor(0, 0x0000ff);
