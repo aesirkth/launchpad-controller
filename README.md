@@ -36,6 +36,8 @@ There are two ways to connect the Launchpad Controller to a computer:
 - Through the USB port on the Teensy LC. It appears as a Serial device. This is the preferred way for testing purposes
 - Through a LoRa link. In this case, a second Launchpad Controller (or any equivalent board) is needed. It appears as a Serial device. The Launchpad Controller on the computer side acts as a gateway and forwards all commands received on its Serial interface to the actual Launchpad Controller via LoRa
 
+![launchpad_controller_gateway](doc/img/launchpad_controller_gateway.png)
+
 The Serial baudrate is set in `platformio.ini` but is not actually used with Teensy microcontrollers. Keep it here to use other microcontrollers with no modifications
 
 # Installation
