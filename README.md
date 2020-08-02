@@ -72,9 +72,6 @@ See [doc/commands.md](doc/commands.md) for a complete list of the available comm
 │   ├── controller.h
 │   ├── gateway.cpp
 │   └── gateway.h
-├── test/                       // Code for unit tests
-│   ├── test_main.cpp
-│   └── test_main.h
 ├── platformio.ini              // PlatformIO configuration file
 └── README.md                   // This file
 ```
