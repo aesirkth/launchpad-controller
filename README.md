@@ -12,7 +12,7 @@ The code on the repository is meant to be used with the Graphical User Interface
 
 *The work on the Mjollnir project is still ongoing*
 
-![launchpad_controller_with_front_panel](doc/img/launchpad_controller_with_front_panel.png)
+![launchpad_controller_with_front_panel](doc/img/launchpad_controller_with_front_panel.jpg)
 
 # Contents <!-- omit in toc -->
 
