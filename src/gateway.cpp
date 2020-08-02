@@ -1,3 +1,18 @@
+/* gateway.cpp
+
+Author: Erwan Caffier for ÆSIR
+
+Date: August 2020
+
+Description:
+  Embedded software on the gateway for the Launchpad Controller. This code listens to the commands
+  received on the USB Serial interface and forwards them to the Launchpad Controller over a Lora
+  link. The data packets received through the LoRa link are sent back on the USB Serial interface.
+  This code has been tested on the Teensy LC microcontroller and the Launchpad Controller of the
+  Mjollnir project.
+
+*/
+
 #include "gateway.h"
 
 #include <Adafruit_NeoPixel.h>

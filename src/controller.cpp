@@ -1,3 +1,17 @@
+/* controller.cpp
+
+Author: Erwan Caffier for ÆSIR
+
+Date: August 2020
+
+Description:
+  Embedded software on the Launchpad Controller to control all of its outputs. The H-bridges are
+  currently not implemented but the servo control and the main outputs are working well. This code
+  has been tested on the Teensy LC microcontroller and the Launchpad Controller of the Mjollnir
+  project.
+
+*/
+
 #include "controller.h"
 
 #include <Adafruit_NeoPixel.h>
