@@ -16,7 +16,7 @@ The Launchpad Controller is a 100 x 100 mm, 4 layers PCB.
 
 ## Schematic
 
-The schematic for the Launchpad Controller can be found in [doc/schematics/s chematic.pdf](schematics/schematic.pdf)
+The schematic for the Launchpad Controller can be found in [doc/schematics/schematic.pdf](schematics/schematic.pdf)
 
 ## Connectors
 
