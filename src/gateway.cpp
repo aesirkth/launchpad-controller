@@ -2,6 +2,8 @@
 
 Author: Erwan Caffier for ÆSIR
 
+Version: v3.0
+
 Date: August 2020
 
 Description:
