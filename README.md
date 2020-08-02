@@ -8,6 +8,8 @@ The Launchpad Controller is an upgraded version of what was used for the Sigmund
 - [v1.0](https://github.com/aesirkth/launchpad-controller/tree/v1.0) - Odin
 - [v2.0](https://github.com/aesirkth/launchpad-controller/tree/v2.0) - Sigmundr
 
+The code on the repository is meant to be used with the Graphical User Interface that can be found at [aesirkth/ground-control](https://github.com/aesirkth/ground-control)
+
 *The work on the Mjollnir project is still ongoing*
 
 ![launchpad_controller_with_front_panel](doc/img/launchpad_controller_with_front_panel.png)
