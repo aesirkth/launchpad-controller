@@ -46,6 +46,7 @@ License:
 
 #include "hardware_definition.h"
 #include "utils.h"
+#include <time.h>
 
 #define BIT_RFM_INIT 0
 #define BIT_OUTPUT1 1
@@ -67,6 +68,8 @@ uint8_t output4_state = 0;
 uint8_t servo1_angle = 0;
 uint8_t servo2_angle = 0;
 uint8_t servo3_angle = 0;
+
+clock_t was_activated_at[4] = [clock(), clock(), clock(), clock()]; 
 
 char data[CMD_DATA_LEN];
 
@@ -90,21 +93,25 @@ void loop() {
       case CMD_TOGGLE_OUTPUT1:
         output1_state = data[1] & 0x01;
         digitalWrite(PIN_OUTPUT1, output1_state);
+	
+	if (output1_state == 1) {
+		startTimer()	
+	}
         break;
 
       case CMD_TOGGLE_OUTPUT2:
-        output2_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT2, output2_state);
+        // output2_state = data[1] & 0x01;
+        // digitalWrite(PIN_OUTPUT2, output2_state);
         break;
 
       case CMD_TOGGLE_OUTPUT3:
-        output3_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT3, output3_state);
+        // output3_state = data[1] & 0x01;
+        // digitalWrite(PIN_OUTPUT3, output3_state);
         break;
 
       case CMD_TOGGLE_OUTPUT4:
-        output4_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT4, output4_state);
+        // output4_state = data[1] & 0x01;
+        // digitalWrite(PIN_OUTPUT4, output4_state);
         break;
 
       case CMD_MOVE_SERVO1:
@@ -127,6 +134,27 @@ void loop() {
     }
     sendState();
   }
+  checkTimer(); 
+}
+
+void startTimer(uint8_t channel) {
+	was_activated_at[channel-1] = clock()
+}
+
+void checkTimer() {
+	if (output1_state == 1 & (clock()-was_activated_at[0])>=500) {
+		output1_state = 0; 
+		digitalWrite(PIN_OUTPUT1, output1_state);		
+	} if (output2_state == 1 & (clock()-was_activated_at[1])>=500){
+		output2_state = 0;
+                digitalWrite(PIN_OUTPUT1, output2_state);
+	} if (output1_state == 3 & (clock()-was_activated_at[2])>=500){
+		output3_state = 0; 
+		digitalWrite(PIN_OUTPUT3, output3_state); 
+	} if (output4_state == 1 & (clock()-was_activated_at[3])>=500){
+		output4_state = 0; 
+		digitalWrite(PIN_OUTPUT4, output4_state); 
+	}
 }
 
 void initRGB() {
