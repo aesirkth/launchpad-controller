@@ -95,24 +95,35 @@ void loop() {
         digitalWrite(PIN_OUTPUT1, output1_state);
 	
 	if (output1_state == 1) {
-		startTimer()	
+		startTimer(1)	
 	}
         break;
 
       case CMD_TOGGLE_OUTPUT2:
-        // output2_state = data[1] & 0x01;
-        // digitalWrite(PIN_OUTPUT2, output2_state);
-        break;
+        output2_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT2, output2_state);
+        if (output2_state == 1) {
+		startTimer(2)
+	}
+	break;
 
       case CMD_TOGGLE_OUTPUT3:
-        // output3_state = data[1] & 0x01;
-        // digitalWrite(PIN_OUTPUT3, output3_state);
-        break;
+        output3_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT3, output3_state);
+        if (output2_state == 1) {
+                startTimer(3)
+        }
+
+	break;
 
       case CMD_TOGGLE_OUTPUT4:
-        // output4_state = data[1] & 0x01;
-        // digitalWrite(PIN_OUTPUT4, output4_state);
-        break;
+        output4_state = data[1] & 0x01;
+        digitalWrite(PIN_OUTPUT4, output4_state);
+        if (output2_state == 1) {
+                startTimer(4)
+        }
+
+	break;
 
       case CMD_MOVE_SERVO1:
         servo1_angle = constrain(data[1], 0, 180);
