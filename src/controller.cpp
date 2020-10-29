@@ -46,7 +46,6 @@ License:
 
 #include "hardware_definition.h"
 #include "utils.h"
-#include <time.h>
 
 #define BIT_RFM_INIT 0
 #define BIT_OUTPUT1 1
@@ -69,7 +68,7 @@ uint8_t servo1_angle = 0;
 uint8_t servo2_angle = 0;
 uint8_t servo3_angle = 0;
 
-clock_t was_activated_at[4] = [clock(), clock(), clock(), clock()]; 
+clock_t was_activated_at[4] = [millis(), millis(), millis(), millis()]; 
 
 char data[CMD_DATA_LEN];
 
@@ -149,20 +148,20 @@ void loop() {
 }
 
 void startTimer(uint8_t channel) {
-	was_activated_at[channel-1] = clock()
+	was_activated_at[channel-1] = millis()
 }
 
 void checkTimer() {
-	if (output1_state == 1 & (clock()-was_activated_at[0])>=500) {
+	if (output1_state == 1 & (millis()-was_activated_at[0])>=500) {
 		output1_state = 0; 
 		digitalWrite(PIN_OUTPUT1, output1_state);		
-	} if (output2_state == 1 & (clock()-was_activated_at[1])>=500){
+	} if (output2_state == 1 & (millis()-was_activated_at[1])>=500){
 		output2_state = 0;
                 digitalWrite(PIN_OUTPUT1, output2_state);
-	} if (output1_state == 3 & (clock()-was_activated_at[2])>=500){
+	} if (output1_state == 3 & (millis()-was_activated_at[2])>=500){
 		output3_state = 0; 
 		digitalWrite(PIN_OUTPUT3, output3_state); 
-	} if (output4_state == 1 & (clock()-was_activated_at[3])>=500){
+	} if (output4_state == 1 & (millis()-was_activated_at[3])>=500){
 		output4_state = 0; 
 		digitalWrite(PIN_OUTPUT4, output4_state); 
 	}
