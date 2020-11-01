@@ -94,7 +94,7 @@ void loop() {
         digitalWrite(PIN_OUTPUT1, output1_state);
 	
 	if (output1_state == 1) {
-		startTimer(1)	
+		startTimer(1);	
 	}
         break;
 
@@ -102,7 +102,7 @@ void loop() {
         output2_state = data[1] & 0x01;
         digitalWrite(PIN_OUTPUT2, output2_state);
         if (output2_state == 1) {
-		startTimer(2)
+		startTimer(2);
 	}
 	break;
 
@@ -110,7 +110,7 @@ void loop() {
         output3_state = data[1] & 0x01;
         digitalWrite(PIN_OUTPUT3, output3_state);
         if (output2_state == 1) {
-                startTimer(3)
+                startTimer(3);
         }
 
 	break;
@@ -119,7 +119,7 @@ void loop() {
         output4_state = data[1] & 0x01;
         digitalWrite(PIN_OUTPUT4, output4_state);
         if (output2_state == 1) {
-                startTimer(4)
+                startTimer(4);
         }
 
 	break;
@@ -148,7 +148,7 @@ void loop() {
 }
 
 void startTimer(uint8_t channel) {
-	was_activated_at[channel-1] = millis()
+	was_activated_at[channel-1] = millis();
 }
 
 void checkTimer() {
