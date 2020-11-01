@@ -53,6 +53,8 @@ License:
 #define BIT_OUTPUT3 3
 #define BIT_OUTPUT4 4
 
+#define ACTIVATION_TIME 500
+
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_RGB_LEDS, PIN_LED_CTRL, NEO_GRB + NEO_KHZ400);
@@ -68,11 +70,19 @@ uint8_t servo1_angle = 0;
 uint8_t servo2_angle = 0;
 uint8_t servo3_angle = 0;
 
-clock_t was_activated_at[4] = [millis(), millis(), millis(), millis()]; 
+unsigned long was_activated_at[4]; 
 
 char data[CMD_DATA_LEN];
 
+void checkTimer();
+void startTimer(uint8_t channel);
+
 void setup() {
+  was_activated_at[0] = millis();
+  was_activated_at[1] = millis();
+  was_activated_at[2] = millis();
+  was_activated_at[3] = millis();
+
   initRGB();
   initMainOutputs();
   initServos();
@@ -109,7 +119,7 @@ void loop() {
       case CMD_TOGGLE_OUTPUT3:
         output3_state = data[1] & 0x01;
         digitalWrite(PIN_OUTPUT3, output3_state);
-        if (output2_state == 1) {
+        if (output3_state == 1) {
                 startTimer(3);
         }
 
@@ -118,7 +128,7 @@ void loop() {
       case CMD_TOGGLE_OUTPUT4:
         output4_state = data[1] & 0x01;
         digitalWrite(PIN_OUTPUT4, output4_state);
-        if (output2_state == 1) {
+        if (output4_state == 1) {
                 startTimer(4);
         }
 
@@ -152,16 +162,16 @@ void startTimer(uint8_t channel) {
 }
 
 void checkTimer() {
-	if (output1_state == 1 & (millis()-was_activated_at[0])>=500) {
+	if (output1_state == 1 && (millis()-was_activated_at[0])>=ACTIVATION_TIME) {
 		output1_state = 0; 
 		digitalWrite(PIN_OUTPUT1, output1_state);		
-	} if (output2_state == 1 & (millis()-was_activated_at[1])>=500){
+	} if (output2_state == 1 && (millis()-was_activated_at[1])>=ACTIVATION_TIME){
 		output2_state = 0;
-                digitalWrite(PIN_OUTPUT1, output2_state);
-	} if (output1_state == 3 & (millis()-was_activated_at[2])>=500){
+                digitalWrite(PIN_OUTPUT2, output2_state);
+	} if (output3_state == 1 && (millis()-was_activated_at[2])>=ACTIVATION_TIME){
 		output3_state = 0; 
 		digitalWrite(PIN_OUTPUT3, output3_state); 
-	} if (output4_state == 1 & (millis()-was_activated_at[3])>=500){
+	} if (output4_state == 1 && (millis()-was_activated_at[3])>=ACTIVATION_TIME){
 		output4_state = 0; 
 		digitalWrite(PIN_OUTPUT4, output4_state); 
 	}
