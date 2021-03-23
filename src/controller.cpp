@@ -135,17 +135,17 @@ void loop() {
 	break;
 
       case CMD_MOVE_SERVO1:
-        servo1_angle = constrain(data[1], 0, 180);
+        servo1_angle = constrain(data[1], 85, 180);
         servo1.write(servo1_angle);
         break;
 
       case CMD_MOVE_SERVO2:
-        servo2_angle = constrain(data[1], 0, 180);
+        servo2_angle = constrain(data[1], 85, 180);
         servo2.write(servo2_angle);
         break;
 
       case CMD_MOVE_SERVO3:
-        servo3_angle = constrain(data[1], 0, 180);
+        servo3_angle = constrain(data[1], 85, 180);
         servo3.write(servo3_angle);
         break;
 
@@ -204,6 +204,9 @@ void initServos() {
   servo1.attach(PIN_PWM1, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
   servo2.attach(PIN_PWM2, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
   servo3.attach(PIN_PWM3, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+  servo1.write(180);
+  servo2.write(180);
+  servo3.write(180);
 }
 
 void resetRFM() {
