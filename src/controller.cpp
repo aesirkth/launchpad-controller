@@ -41,7 +41,7 @@ License:
 
 #include <Adafruit_NeoPixel.h>
 #include <PWMServo.h>
-#include <RH_RF95.h>  // RadioHead library  to control the LoRa transceiver
+#include <RH_RF95.h> // RadioHead library  to control the LoRa transceiver
 #include <SPI.h>
 
 #include "hardware_definition.h"
@@ -53,6 +53,10 @@ License:
 #define BIT_OUTPUT3 3
 #define BIT_OUTPUT4 4
 
+#define SERVO_LIMIT_LOW 85
+#define SERVO_LIMIT_HIGH 180
+
+#define LIMIT_ACTIVATION
 #define ACTIVATION_TIME 500
 
 RH_RF95 rfm(PIN_RFM_NSS, digitalPinToInterrupt(PIN_RFM_INT));
@@ -70,14 +74,15 @@ uint8_t servo1_angle = 0;
 uint8_t servo2_angle = 0;
 uint8_t servo3_angle = 0;
 
-unsigned long was_activated_at[4]; 
+unsigned long was_activated_at[4];
 
 char data[CMD_DATA_LEN];
 
 void checkTimer();
 void startTimer(uint8_t channel);
 
-void setup() {
+void setup()
+{
   was_activated_at[0] = millis();
   was_activated_at[1] = millis();
   was_activated_at[2] = millis();
@@ -92,92 +97,112 @@ void setup() {
   analogReadRes(12);
 }
 
-void loop() {
-  if (getCommand(data)) {
-    switch (data[0]) {
-      case CMD_SEND_BONJOUR:
-        Serial.println(BONJOUR);
-        break;
+void loop()
+{
+  if (getCommand(data))
+  {
+    switch (data[0])
+    {
+    case CMD_SEND_BONJOUR:
+      Serial.println(BONJOUR);
+      break;
 
-      case CMD_TOGGLE_OUTPUT1:
-        output1_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT1, output1_state);
-	
-	if (output1_state == 1) {
-		startTimer(1);	
-	}
-        break;
+    case CMD_TOGGLE_OUTPUT1:
+      output1_state = data[1] & 0x01;
+      digitalWrite(PIN_OUTPUT1, output1_state);
 
-      case CMD_TOGGLE_OUTPUT2:
-        output2_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT2, output2_state);
-        if (output2_state == 1) {
-		startTimer(2);
-	}
-	break;
+      if (output1_state == 1)
+      {
+        startTimer(1);
+      }
+      break;
 
-      case CMD_TOGGLE_OUTPUT3:
-        output3_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT3, output3_state);
-        if (output3_state == 1) {
-                startTimer(3);
-        }
+    case CMD_TOGGLE_OUTPUT2:
+      output2_state = data[1] & 0x01;
+      digitalWrite(PIN_OUTPUT2, output2_state);
+      if (output2_state == 1)
+      {
+        startTimer(2);
+      }
+      break;
 
-	break;
+    case CMD_TOGGLE_OUTPUT3:
+      output3_state = data[1] & 0x01;
+      digitalWrite(PIN_OUTPUT3, output3_state);
+      if (output3_state == 1)
+      {
+        startTimer(3);
+      }
 
-      case CMD_TOGGLE_OUTPUT4:
-        output4_state = data[1] & 0x01;
-        digitalWrite(PIN_OUTPUT4, output4_state);
-        if (output4_state == 1) {
-                startTimer(4);
-        }
+      break;
 
-	break;
+    case CMD_TOGGLE_OUTPUT4:
+      output4_state = data[1] & 0x01;
+      digitalWrite(PIN_OUTPUT4, output4_state);
+      if (output4_state == 1)
+      {
+        startTimer(4);
+      }
 
-      case CMD_MOVE_SERVO1:
-        servo1_angle = constrain(data[1], 85, 180);
-        servo1.write(servo1_angle);
-        break;
+      break;
 
-      case CMD_MOVE_SERVO2:
-        servo2_angle = constrain(data[1], 85, 180);
-        servo2.write(servo2_angle);
-        break;
+    case CMD_MOVE_SERVO1:
+      servo1_angle = constrain(data[1], SERVO_LIMIT_LOW, SERVO_LIMIT_HIGH);
+      servo1.write(servo1_angle);
+      break;
 
-      case CMD_MOVE_SERVO3:
-        servo3_angle = constrain(data[1], 85, 180);
-        servo3.write(servo3_angle);
-        break;
+    case CMD_MOVE_SERVO2:
+      servo2_angle = constrain(data[1], SERVO_LIMIT_LOW, SERVO_LIMIT_HIGH);
+      servo2.write(servo2_angle);
+      break;
 
-      default:
-        break;
+    case CMD_MOVE_SERVO3:
+      servo3_angle = constrain(data[1], SERVO_LIMIT_LOW, SERVO_LIMIT_HIGH);
+      servo3.write(servo3_angle);
+      break;
+
+    default:
+      break;
     }
     sendState();
   }
-  checkTimer(); 
+
+#ifdef LIMIT_ACTIVATION
+  checkTimer();
+#endif
 }
 
-void startTimer(uint8_t channel) {
-	was_activated_at[channel-1] = millis();
+void startTimer(uint8_t channel)
+{
+  was_activated_at[channel - 1] = millis();
 }
 
-void checkTimer() {
-	if (output1_state == 1 && (millis()-was_activated_at[0])>=ACTIVATION_TIME) {
-		output1_state = 0; 
-		digitalWrite(PIN_OUTPUT1, output1_state);		
-	} if (output2_state == 1 && (millis()-was_activated_at[1])>=ACTIVATION_TIME){
-		output2_state = 0;
-                digitalWrite(PIN_OUTPUT2, output2_state);
-	} if (output3_state == 1 && (millis()-was_activated_at[2])>=ACTIVATION_TIME){
-		output3_state = 0; 
-		digitalWrite(PIN_OUTPUT3, output3_state); 
-	} if (output4_state == 1 && (millis()-was_activated_at[3])>=ACTIVATION_TIME){
-		output4_state = 0; 
-		digitalWrite(PIN_OUTPUT4, output4_state); 
-	}
+void checkTimer()
+{
+  if (output1_state == 1 && (millis() - was_activated_at[0]) >= ACTIVATION_TIME)
+  {
+    output1_state = 0;
+    digitalWrite(PIN_OUTPUT1, output1_state);
+  }
+  if (output2_state == 1 && (millis() - was_activated_at[1]) >= ACTIVATION_TIME)
+  {
+    output2_state = 0;
+    digitalWrite(PIN_OUTPUT2, output2_state);
+  }
+  if (output3_state == 1 && (millis() - was_activated_at[2]) >= ACTIVATION_TIME)
+  {
+    output3_state = 0;
+    digitalWrite(PIN_OUTPUT3, output3_state);
+  }
+  if (output4_state == 1 && (millis() - was_activated_at[3]) >= ACTIVATION_TIME)
+  {
+    output4_state = 0;
+    digitalWrite(PIN_OUTPUT4, output4_state);
+  }
 }
 
-void initRGB() {
+void initRGB()
+{
   strip.begin();
   delay(10);
   strip.clear();
@@ -188,7 +213,8 @@ void initRGB() {
   strip.show();
 }
 
-void initMainOutputs() {
+void initMainOutputs()
+{
   pinMode(PIN_OUTPUT1, OUTPUT);
   pinMode(PIN_OUTPUT2, OUTPUT);
   pinMode(PIN_OUTPUT3, OUTPUT);
@@ -200,16 +226,18 @@ void initMainOutputs() {
   digitalWrite(PIN_OUTPUT4, LOW);
 }
 
-void initServos() {
+void initServos()
+{
   servo1.attach(PIN_PWM1, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
   servo2.attach(PIN_PWM2, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
   servo3.attach(PIN_PWM3, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
-  servo1.write(180);
-  servo2.write(180);
-  servo3.write(180);
+  servo1.write(SERVO_LIMIT_HIGH);
+  servo2.write(SERVO_LIMIT_HIGH);
+  servo3.write(SERVO_LIMIT_HIGH);
 }
 
-void resetRFM() {
+void resetRFM()
+{
   pinMode(PIN_RFM_RESET, OUTPUT);
   digitalWrite(PIN_RFM_RESET, HIGH);
   delay(100);
@@ -219,9 +247,11 @@ void resetRFM() {
   delay(100);
 }
 
-void initRFM() {
+void initRFM()
+{
   rfm_init_success = rfm.init();
-  if (rfm_init_success) {
+  if (rfm_init_success)
+  {
     // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
     rfm.setFrequency(RFM_FREQ);
     rfm.setTxPower(RFM_TX_POWER, false);
@@ -229,30 +259,40 @@ void initRFM() {
   showStatus();
 }
 
-void initCommunications() {
+void initCommunications()
+{
   Serial.begin(BAUDRATE);
 
   resetRFM();
   initRFM();
 }
 
-void showStatus() {
-  if (not rfm_init_success) {
+void showStatus()
+{
+  if (not rfm_init_success)
+  {
     strip.setPixelColor(0, 0xff0000);
-  } else {
+  }
+  else
+  {
     strip.setPixelColor(0, 0x00ff00);
   }
   strip.show();
 }
 
-uint8_t getCommand(char* data) {
-  if (rfm_init_success) {
-    if (rfm.waitAvailableTimeout(100)) {
+uint8_t getCommand(char *data)
+{
+  if (rfm_init_success)
+  {
+    if (rfm.waitAvailableTimeout(100))
+    {
       uint8_t rf95_buf[RH_RF95_MAX_MESSAGE_LEN];
       uint8_t rf95_len = sizeof(rf95_buf);
 
-      if (rfm.recv(rf95_buf, &rf95_len)) {
-        for (uint8_t i = 0; i < CMD_DATA_LEN; i++) {
+      if (rfm.recv(rf95_buf, &rf95_len))
+      {
+        for (uint8_t i = 0; i < CMD_DATA_LEN; i++)
+        {
           data[i] = rf95_buf[i];
         }
         strip.setPixelColor(0, 0xff0000);
@@ -261,15 +301,20 @@ uint8_t getCommand(char* data) {
         showStatus();
       }
       return 1;
-    } else {
-      return getSerialCommand(Serial, data);  // Ignore the ID
     }
-  } else {
-    return getSerialCommand(Serial, data);  // Ignore the ID
+    else
+    {
+      return getSerialCommand(Serial, data); // Ignore the ID
+    }
+  }
+  else
+  {
+    return getSerialCommand(Serial, data); // Ignore the ID
   }
 }
 
-void sendState() {  // Get the current state of the Launch Pad Station Board and
+void sendState()
+{ // Get the current state of the Launch Pad Station Board and
   // send it to the control interface
   uint8_t state = 0;
   state = state | rfm_init_success << BIT_RFM_INIT;
@@ -279,9 +324,12 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
   state = state | output4_state << BIT_OUTPUT4;
 
   int8_t rssi;
-  if (rfm_init_success) {
+  if (rfm_init_success)
+  {
     rssi = rfm.lastRssi();
-  } else {
+  }
+  else
+  {
     rssi = 0;
   }
 
@@ -306,7 +354,8 @@ void sendState() {  // Get the current state of the Launch Pad Station Board and
   message[7] = battery2_lsb;
   message[8] = rssi;
 
-  if (rfm_init_success) {
+  if (rfm_init_success)
+  {
     strip.setPixelColor(0, 0x0000ff);
     strip.show();
     delay(20);

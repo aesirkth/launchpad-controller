@@ -2,8 +2,8 @@
 // Board outputs
 #define PIN_OUTPUT1 1    // P1 on the board
 #define PIN_OUTPUT2 A11  // P2 on the board
-#define PIN_OUTPUT3 A10  // P3 on the board
-#define PIN_OUTPUT4 23   // P4 on the board
+#define PIN_OUTPUT4 A10  // P3 on the board
+#define PIN_OUTPUT3 23   // P4 on the board switcheroo
 #define PIN_PWM1 16      // P5 on the board
 #define PIN_PWM2 20      // P6 on the board
 #define PIN_PWM3 22      // P7 on the board
